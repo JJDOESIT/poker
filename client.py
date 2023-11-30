@@ -9,11 +9,9 @@ class Client:
     
     # Connect to the server
     def connect(self):
-        try:
-            self.client_socket.connect(('127.0.0.1', 5555))
-            return int(self.client_socket.recv(1024).decode())
-        except:
-            print("Error connecting!")
+        self.client_socket.connect(('172.31.70.85', 5555))
+        return int(self.client_socket.recv(1024).decode())
+    
 
     # Send objects to the server
     def send_object(self,object):
