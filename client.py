@@ -9,7 +9,7 @@ class Client:
     
     # Connect to the server
     def connect(self):
-        self.client_socket.connect(('172.31.70.85', 5555))
+        self.client_socket.connect(('192.168.56.1', 6262))
         return int(self.client_socket.recv(1024).decode())
     
 
