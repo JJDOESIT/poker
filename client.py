@@ -10,7 +10,7 @@ class Client:
     # Connect to the server
     def connect(self):
         try:
-            self.client_socket.connect((socket.gethostbyname(''), 5555))
+            self.client_socket.connect(('127.0.0.1', 5555))
             return int(self.client_socket.recv(1024).decode())
         except:
             print("Error connecting!")
