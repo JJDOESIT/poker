@@ -4,7 +4,7 @@ import _thread
 from data import Data
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-address = ('', 6276)
+address = ('0.0.0.0', 5555)
 s.bind(address)
 s.listen(4)
 print("Listening...")
