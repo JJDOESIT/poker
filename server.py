@@ -4,7 +4,7 @@ import _thread
 from data import Data
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-address = (socket.gethostbyname(''), 5556)
+address = ('0.0.0.0', 5556)
 s.bind(address)
 s.listen(4)
 print("Listening...")
@@ -16,10 +16,12 @@ def thread(client_socket):
     personal_id = None
 
     try:
-        client_socket.send(str(data.id).encode())
-        personal_id = data.id
-        data.players_connected.append(data.id)
-        data.id += 1
+        for key, value in data.players_connected.items():
+            if value == 'open':
+                personal_id = key
+                break
+        data.players_connected[personal_id] = 'taken'
+        client_socket.send(str(personal_id).encode())
     except:
         print("Error")
     while True:
@@ -28,7 +30,7 @@ def thread(client_socket):
             recv_data = pickle.loads(recv_data)
         except:
             print(f"Client {personal_id} disconnected")
-            data.players_connected.remove(personal_id)
+            data.players_connected[personal_id] = 'open'
             break
         try:
             sent_data = pickle.dumps(data)

@@ -3,15 +3,17 @@ import pickle
 
 
 class Client:
-    def __init__(self):
+    def __init__(self, ip = '10.34.62.201'):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.id = self.connect()
+        self.id = None
     
     # Connect to the server
-    def connect(self):
-        self.client_socket.connect(('192.168.56.1', 5556))
-        return int(self.client_socket.recv(1024).decode())
-    
+    def connect(self, ip):
+        try:
+            self.client_socket.connect((ip, 5556))
+            self.id = int(self.client_socket.recv(1024).decode())
+        except:
+            self.id = -1
 
     # Send objects to the server
     def send_object(self,object):
