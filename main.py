@@ -1,140 +1,274 @@
 from player import Player
-from deck import Deck
-from lobby import Lobby
+from join import Join
 from client import Client
+from home import Home
+from create import Create
+from draw import Draw
 import pygame as pg
+import os
+import subprocess
+
+
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
 pg.init()
+
 
 class Game:
     def __init__(self):
         self.screen = pg.display.set_mode((500, 500))
-        self.font = pg.font.Font(None, 32)
+
         self.sprite_diameter = 50
-        self.player_list = [Player(), Player(),Player(), Player()]
+        self.player_list = [Player(), Player(), Player(), Player()]
         self.client = Client()
-        self.lobby = Lobby()
+        self.home_page = Home()
+        self.join_lobby = Join()
+        self.create_lobby = Create()
         self.initilize_seats()
         self.initilize_sprites()
-
-    # Draw the main lobby page
-    def draw_lobby(self):
-        # Draw the text input box 
-        if (self.lobby.type_active):
-            pg.draw.rect(self.screen, self.lobby.active_color, self.lobby.input_rect)
-        else:
-            pg.draw.rect(self.screen, self.lobby.passive_color, self.lobby.input_rect)
-        #Draw the connect button
-        if (self.lobby.connect_active):
-            pg.draw.rect(self.screen, self.lobby.active_color, self.lobby.connect_rect, border_radius = 50)
-        else:
-            pg.draw.rect(self.screen, self.lobby.passive_color, self.lobby.connect_rect, border_radius = 50)
-        # Draw the "Connect" text
-        connect_text_surface = self.font.render("Connect", True, (0,0,0))
-        self.screen.blit(connect_text_surface, (self.lobby.connect_rect.centerx - 45, self.lobby.connect_rect.center[1] - 10))
-        # Draw the "Server IP:" text
-        label_text_surface = self.font.render("Server IP:", True, (255,255,255))
-        self.screen.blit(label_text_surface, (self.lobby.input_rect.left, self.lobby.input_rect.top - 32))
-        # Draw the ip address text 
-        ip_text_surface = self.font.render(self.lobby.lobby_ip, True, (0,0,0))
-        self.screen.blit(ip_text_surface, (self.lobby.input_rect.midleft))
+        self.draw = Draw(
+            self.screen, self.home_page, self.join_lobby, self.create_lobby
+        )
 
     # Attempt to connect to the server
-    def connect_to_server(self):
-        self.client.connect(self.lobby.lobby_ip)
+    def connect_to_server(self, ip, port):
+        if not len(ip) > 2 or not len(port) > 0:
+            return
+        self.client.connect(ip, port)
+        # If user failed to connect to server
         if self.client.id == -1:
-            print('error')
+            if self.join_lobby.in_lobby:
+                self.join_lobby.failed_to_connect = True
         else:
-            self.lobby.in_lobby = False
-        
+            # If joining from join menu
+            if self.join_lobby.in_lobby:
+                self.player_list[self.client.id].name = self.join_lobby.name
+                self.join_lobby.reset()
+                self.join_lobby.in_lobby = False
+            # If joining from creating a server
+            elif self.create_lobby.in_lobby:
+                self.create_lobby.reset()
+                self.create_lobby.auto_connect = False
+                self.create_lobby.in_lobby = False
+                self.create_lobby.external_ip = ""
+                self.create_lobby.port = ""
+                self.player_list[0].name = "Host"
+            self.player_list[self.client.id].id = self.client.id
 
-    def draw_table(self):
-        wood_section = pg.Rect(100, 125,300,250)
-        gold_section = pg.Rect(115, 140, 270, 220)
-        felt_section = pg.Rect(120, 145, 260,210)
-        pg.draw.rect(self.screen, (70,50,5), wood_section)
-        pg.draw.rect(self.screen, (204,204,0), gold_section)
-        pg.draw.rect(self.screen, (0,100,0), felt_section)
+    # Attempt to create lobby
+    def create(self):
+        if not len(self.create_lobby.port) > 0:
+            return
+        result = subprocess.Popen(["py", "testBind.py", self.create_lobby.port])
+        result.wait()
+        self.create_lobby.reset()
+        if result.returncode == 1:
+            self.create_lobby.failed_to_create = True
+            self.create_lobby.success = False
+        else:
+            self.create_lobby.failed_to_create = False
+            self.create_lobby.success = True
+            if self.create_lobby.auto_connect:
+                self.connect_to_server(
+                    self.create_lobby.external_ip, self.create_lobby.port
+                )
 
+    # Initilize the position where each player will be sitting
     def initilize_seats(self):
-        seat_positions = [(250,437.5),(62.5,250),(250,62.5),(437.5, 250)]
+        seat_positions = [(200, 350), (0, 200), (200, 40), (400, 200)]
         for index in range(4):
             self.player_list[index].seat = seat_positions[index]
 
+    # Initilize the player sprite
     def initilize_sprites(self):
-        for index in range(4):
-            x = self.player_list[index].seat[0]
-            y = self.player_list[index].seat[1]
-            self.player_list[index].sprite = pg.Rect(x - (self.sprite_diameter/2),y - (self.sprite_diameter/2),self.sprite_diameter,self.sprite_diameter)
+        for player in self.player_list:
+            player.player_border_rect = pg.Rect(player.seat[0], player.seat[1], 100, 60)
 
-    def draw_sprites(self, players_connected):
-        for index in range(4):
-            if players_connected[index] == 'taken':
-                pg.draw.rect(self.screen, (100,100,100), self.player_list[index].sprite, border_radius = 50)
-
-    def check_for_events(self):
+    # Handle user input
+    def handle_input(self):
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
-            # If user clicks mouse button
-            if event.type == pg.MOUSEBUTTONDOWN:
-                # If the user is in the lobby
-                if self.lobby.in_lobby:
-                    # If the user clicks the text input box
-                    if self.lobby.input_rect.collidepoint(event.pos):
-                        self.lobby.type_active = True
-                    else:
-                        self.lobby.type_active = False
-                    # If the user clicks the connect button
-                    if self.lobby.connect_rect.collidepoint(event.pos):
-                        self.connect_to_server()
 
-            # If user presses a key
-            if event.type == pg.KEYDOWN:
-                # If the user is in the lobby
-                if self.lobby.in_lobby:
-                    # If the input box has been clicked
-                    if self.lobby.type_active:
+            # If the user is in the home page
+            if self.home_page.in_home:
+                # If user clicks mouse button
+                if event.type == pg.MOUSEBUTTONUP:
+                    # If the user clicks the join button
+                    if self.home_page.join_rect.collidepoint(event.pos):
+                        self.home_page.in_home = False
+                        self.home_page.join_active = False
+                        self.join_lobby.in_lobby = True
+                    # If the user clicks the create button
+                    elif self.home_page.create_rect.collidepoint(event.pos):
+                        self.home_page.in_home = False
+                        self.home_page.create_active = False
+                        self.create_lobby.in_lobby = True
+
+                # If the user moves their mouse
+                if event.type == pg.MOUSEMOTION:
+                    self.home_page.join_active = self.home_page.join_rect.collidepoint(
+                        event.pos
+                    )
+                    self.home_page.create_active = (
+                        self.home_page.create_rect.collidepoint(event.pos)
+                    )
+
+            # If the user is in the join_lobby page
+            elif self.join_lobby.in_lobby:
+                # If user clicks mouse button
+                if event.type == pg.MOUSEBUTTONUP:
+                    # If the user clicks on ip text box
+                    self.join_lobby.type_ip_active = (
+                        self.join_lobby.input_ip_rect.collidepoint(event.pos)
+                    )
+                    # If the user clicks the port text box
+                    self.join_lobby.type_port_active = (
+                        self.join_lobby.input_port_rect.collidepoint(event.pos)
+                    )
+                    # If the user clicks the name text box
+                    self.join_lobby.type_name_active = (
+                        self.join_lobby.input_name_rect.collidepoint(event.pos)
+                    )
+                    # If the user clicks connect
+                    if self.join_lobby.connect_rect.collidepoint(event.pos):
+                        if len(self.join_lobby.name) > 0:
+                            self.connect_to_server(
+                                self.join_lobby.lobby_ip, self.join_lobby.port
+                            )
+                    # If the user clicks the exit button
+                    if self.join_lobby.exit_rect.collidepoint(event.pos):
+                        self.join_lobby.reset()
+                        self.join_lobby.in_lobby = False
+                        self.home_page.in_home = True
+
+                # If user presses a key
+                elif event.type == pg.KEYDOWN:
+                    # If the input ip box has been clicked
+                    if self.join_lobby.type_ip_active:
                         if event.key == pg.K_BACKSPACE:
-                            if len(self.lobby.lobby_ip) > 0:
-                                self.lobby.lobby_ip = self.lobby.lobby_ip[:-1]
-                        elif ((event.unicode.isnumeric() or event.unicode == '.') and len(self.lobby.lobby_ip) < 15):
-                            self.lobby.lobby_ip += event.unicode
-            # If the user moves their mouse
-            if event.type == pg.MOUSEMOTION:
-                # If the user is in the lobby
-                if self.lobby.in_lobby:
-                    # If the user hovers over the connect button
-                    if self.lobby.connect_rect.collidepoint(event.pos):
-                        self.lobby.connect_active = True
-                    else:
-                        self.lobby.connect_active = False
+                            if len(self.join_lobby.lobby_ip) > 0:
+                                self.join_lobby.lobby_ip = self.join_lobby.lobby_ip[:-1]
+                        elif (
+                            event.unicode.isnumeric() or event.unicode == "."
+                        ) and len(self.join_lobby.lobby_ip) < 15:
+                            self.join_lobby.lobby_ip += event.unicode
+
+                    # If the input port box has been clicked
+                    if self.join_lobby.type_port_active:
+                        if event.key == pg.K_BACKSPACE:
+                            if len(self.join_lobby.port) > 0:
+                                self.join_lobby.port = self.join_lobby.port[:-1]
+                        elif (
+                            event.unicode.isnumeric() or event.unicode == "."
+                        ) and len(self.join_lobby.port) < 6:
+                            self.join_lobby.port += event.unicode
+
+                    # If the input name box has been clicked
+                    if self.join_lobby.type_name_active:
+                        if event.key == pg.K_BACKSPACE:
+                            if len(self.join_lobby.name) > 0:
+                                self.join_lobby.name = self.join_lobby.name[:-1]
+                        elif event.unicode.isalpha() and len(self.join_lobby.name) < 10:
+                            self.join_lobby.name += event.unicode
+
+                # If the user moves their mouse
+                elif event.type == pg.MOUSEMOTION:
+                    self.join_lobby.connect_active = (
+                        self.join_lobby.connect_rect.collidepoint(event.pos)
+                    )
+                    self.join_lobby.exit_active = (
+                        self.join_lobby.exit_rect.collidepoint(event.pos)
+                    )
+
+            # If the user is in the create lobby page
+            elif self.create_lobby.in_lobby:
+                # If user clicks mouse button
+                if event.type == pg.MOUSEBUTTONUP:
+                    # If the user clicks the ip input box
+                    self.create_lobby.type_ip_active = (
+                        self.create_lobby.input_ip_rect.collidepoint(event.pos)
+                    )
+                    # If the user clicks the port input box
+                    self.create_lobby.type_port_active = (
+                        self.create_lobby.input_port_rect.collidepoint(event.pos)
+                    )
+                    # If the user clicks auto connect
+                    if self.create_lobby.auto_connect_rect.collidepoint(event.pos):
+                        self.create_lobby.auto_connect = (
+                            not self.create_lobby.auto_connect
+                        )
+
+                    # If the user clicks create
+                    if self.create_lobby.create_rect.collidepoint(event.pos):
+                        self.create()
+                    # If the user clicks the exit button
+                    if self.create_lobby.exit_rect.collidepoint(event.pos):
+                        self.create_lobby.reset()
+                        self.create_lobby.in_lobby = False
+                        self.create_lobby.auto_connect = False
+                        self.home_page.in_home = True
+                        self.create_lobby.external_ip = ""
+                        self.create_lobby.port = ""
+
+                # If user presses a key
+                elif event.type == pg.KEYDOWN:
+                    # If the ip input box has been clicked
+                    if self.create_lobby.type_ip_active:
+                        if event.key == pg.K_BACKSPACE:
+                            if len(self.create_lobby.external_ip) > 0:
+                                self.create_lobby.external_ip = (
+                                    self.create_lobby.external_ip[:-1]
+                                )
+                        elif (
+                            event.unicode.isnumeric() or event.unicode == "."
+                        ) and len(self.create_lobby.external_ip) < 15:
+                            self.create_lobby.external_ip += event.unicode
+                    # If the port input box has been cicked
+                    elif self.create_lobby.type_port_active:
+                        if event.key == pg.K_BACKSPACE:
+                            if len(self.create_lobby.port) > 0:
+                                self.create_lobby.port = self.create_lobby.port[:-1]
+                        elif (
+                            event.unicode.isnumeric() or event.unicode == "."
+                        ) and len(self.create_lobby.port) < 6:
+                            self.create_lobby.port += event.unicode
+
+                # If the user moves their mouse
+                if event.type == pg.MOUSEMOTION:
+                    self.create_lobby.connect_active = (
+                        self.create_lobby.create_rect.collidepoint(event.pos)
+                    )
+                    self.create_lobby.exit_active = (
+                        self.create_lobby.exit_rect.collidepoint(event.pos)
+                    )
 
     def run(self):
         clock = pg.time.Clock()
         while True:
             clock.tick(60)
-            self.check_for_events()
-            
-           
-            if self.lobby.in_lobby:
-                self.screen.fill((0,120,0))
-                self.draw_lobby()
+            self.handle_input()
+
+            if self.home_page.in_home:
+                self.screen.fill((0, 120, 0))
+                self.draw.draw_home()
+
+            elif self.join_lobby.in_lobby:
+                self.screen.fill((0, 120, 0))
+                self.draw.draw_join_lobby()
+            elif self.create_lobby.in_lobby:
+                self.screen.fill((0, 120, 0))
+                self.draw.draw_create_lobby()
             else:
-                self.screen.fill((255,255,255))
-                self.client.send_object(self.player_list[0])
+                self.screen.fill((255, 255, 255))
+                self.client.send_object(self.player_list[self.client.id])
                 data = self.client.receive_object()
-                self.draw_table()
-                self.draw_sprites(data.players_connected)
-           
-            
+                self.client.sync_players(self.player_list, data.player_list)
+                self.draw.draw_table()
+                self.draw.draw_sprites(self.player_list, data.players_connected)
+
             pg.display.flip()
+
 
 game = Game()
 game.run()
-        
-        
-
-        
-
-
