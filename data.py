@@ -1,4 +1,5 @@
 from player import Player
+import pygame as pg
 
 
 class Data:
@@ -11,6 +12,17 @@ class Data:
         self.players_ready = [False, False, False, False]
         self.player_list = [Player(), Player(), Player(), Player()]
         self.players_connected = {0: "open", 1: "open", 2: "open", 3: "open"}
+
+    # Initilize the position where each player will be sitting
+    def initilize_seats(self):
+        seat_positions = [(200, 350), (0, 200), (200, 40), (400, 200)]
+        for index in range(4):
+            self.player_list[index].seat = seat_positions[index]
+
+    # Initilize the player sprite
+    def initilize_sprites(self):
+        for player in self.player_list:
+            player.player_border_rect = pg.Rect(player.seat[0], player.seat[1], 100, 60)
 
     # Handle players as they ready up
     def handle_ready_up(self, player):

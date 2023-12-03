@@ -102,6 +102,7 @@ class Game:
         for player in self.player_list:
             player.player_border_rect = pg.Rect(player.seat[0], player.seat[1], 100, 60)
 
+
     # Handle user input
     def handle_input(self):
         for event in pg.event.get():
