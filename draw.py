@@ -133,7 +133,6 @@ class Draw:
                     (225, 225, 225),
                     player_list[index].player_border_rect,
                 )
-
                 # Display the players name
                 name_text_surface = self.xs_font.render(
                     player_list[index].name, True, (0, 0, 0)

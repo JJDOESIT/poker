@@ -23,15 +23,13 @@ class Game:
         self.turn = 0
         self.game_started = False
         self.overhead_message = ""
-        self.player_list = [Player(), Player(), Player(), Player()]
+        self.player_list = [Player(0), Player(1), Player(2), Player(3)]
         self.client = Client()
         self.home_page = Home()
         self.join_lobby = Join()
         self.create_lobby = Create()
         self.options = Options()
         self.ready = Ready()
-        self.initilize_seats()
-        self.initilize_sprites()
         self.draw = Draw(
             self.screen,
             self.home_page,
@@ -64,7 +62,6 @@ class Game:
                 self.create_lobby.external_ip = ""
                 self.create_lobby.port = ""
                 self.player_list[0].name = "Host"
-            self.player_list[self.client.id].id = self.client.id
 
     # Attempt to create lobby
     def create(self):
@@ -90,18 +87,6 @@ class Game:
             if game_started:
                 self.game_started = game_started
                 self.player_list[self.client.id].previous_action = ""
-
-    # Initilize the position where each player will be sitting
-    def initilize_seats(self):
-        seat_positions = [(200, 350), (0, 200), (200, 40), (400, 200)]
-        for index in range(4):
-            self.player_list[index].seat = seat_positions[index]
-
-    # Initilize the player sprite
-    def initilize_sprites(self):
-        for player in self.player_list:
-            player.player_border_rect = pg.Rect(player.seat[0], player.seat[1], 100, 60)
-
 
     # Handle user input
     def handle_input(self):
