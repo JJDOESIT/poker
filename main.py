@@ -22,6 +22,7 @@ class Game:
         self.sprite_diameter = 50
         self.turn = 0
         self.game_started = False
+        self.overhead_message = ""
         self.player_list = [Player(), Player(), Player(), Player()]
         self.client = Client()
         self.home_page = Home()
@@ -84,7 +85,7 @@ class Game:
                 )
 
     # See if the server has started the game
-    def check_if_game_started(self, game_started):
+    def check_if_game_started(self, game_started, dealer):
         if not self.game_started:
             if game_started:
                 self.game_started = game_started
@@ -282,7 +283,10 @@ class Game:
                     if self.turn == self.client.id:
                         # If the user clicks the fold option
                         if self.options.fold_rect.collidepoint(event.pos):
-                            self.player_list[self.turn].move.append("fold")
+                            self.player_list[self.client.id].move.append("fold")
+                            self.player_list[self.client.id].move.append(
+                                f"{self.player_list[self.client.id].name} has folded"
+                            )
 
                 if event.type == pg.MOUSEMOTION:
                     self.options.fold_active = self.options.fold_rect.collidepoint(
@@ -331,11 +335,14 @@ class Game:
                 self.client.sync_players(self.player_list, data.player_list)
 
                 # Check if the game is started
-                self.check_if_game_started(data.game_started)
+                self.check_if_game_started(data.game_started, data.dealer)
+
+                self.overhead_message = data.overhead_message
 
                 # Update turn
                 self.turn = data.turn
 
+                self.draw.draw_overhead_message(self.overhead_message)
                 self.draw.draw_table()
                 self.draw.draw_sprites(self.player_list, data.players_connected)
 

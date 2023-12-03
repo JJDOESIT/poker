@@ -6,6 +6,7 @@ class Data:
         self.turn = 0
         self.id = 0
         self.dealer = 0
+        self.overhead_message = ""
         self.game_started = False
         self.players_ready = [False, False, False, False]
         self.player_list = [Player(), Player(), Player(), Player()]
@@ -24,6 +25,9 @@ class Data:
                 if value == "taken":
                     if not self.players_ready[key]:
                         return
+            self.overhead_message = (
+                f"{self.player_list[self.dealer].name} is the dealer"
+            )
             self.game_started = True
 
     # Switch to next players turn
@@ -50,6 +54,7 @@ class Data:
 
         if player.move[0] == "fold":
             self.player_list[player.id].previous_action = "fold"
+            self.overhead_message = player.move[1]
             self.player_list[player.id].move = []
             self.increament_turn()
 
@@ -61,6 +66,8 @@ class Data:
         print("Server reset")
         self.turn = 0
         self.id = 0
+        self.dealer = 0
+        self.overhead_message = ""
         self.game_started = False
         self.players_ready = [False, False, False, False]
         self.player_list = [Player(), Player(), Player(), Player()]

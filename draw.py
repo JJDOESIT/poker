@@ -14,6 +14,13 @@ class Draw:
         self.md_font = pg.font.Font(None, 32)
         self.lg_font = pg.font.Font(None, 64)
 
+    def draw_overhead_message(self, message):
+        overhead_message_text_surface = self.md_font.render(message, True, (0, 0, 0))
+        self.screen.blit(
+            overhead_message_text_surface,
+            (250 - (overhead_message_text_surface.get_width() / 2), 5),
+        )
+
     # Draw the ready up button
     def draw_ready_option(self):
         if self.ready.is_ready:
