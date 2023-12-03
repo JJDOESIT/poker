@@ -29,5 +29,4 @@ class Client:
     # Sync all the players
     def sync_players(self, player_list, received_player_list):
         for index in range(4):
-            if index != self.id:
-                player_list[index] = received_player_list[index]
+            player_list[index] = received_player_list[index]

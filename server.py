@@ -33,10 +33,13 @@ def thread(client_socket):
             recv_data = client_socket.recv(4096)
             recv_data = pickle.loads(recv_data)
             data.sync_players(recv_data)
+            data.handle_ready_up(recv_data)
+            data.handle_move(recv_data)
         # If no data is received, disconnect the player
         except:
             print(f"Client {personal_id} disconnected")
             data.players_connected[personal_id] = "open"
+            data.check_for_reset()
             break
         # Send the other players data back
         try:

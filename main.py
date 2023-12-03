@@ -3,7 +3,9 @@ from join import Join
 from client import Client
 from home import Home
 from create import Create
+from options import Options
 from draw import Draw
+from ready import Ready
 import pygame as pg
 import os
 import subprocess
@@ -17,17 +19,25 @@ pg.init()
 class Game:
     def __init__(self):
         self.screen = pg.display.set_mode((500, 500))
-
         self.sprite_diameter = 50
+        self.turn = 0
+        self.game_started = False
         self.player_list = [Player(), Player(), Player(), Player()]
         self.client = Client()
         self.home_page = Home()
         self.join_lobby = Join()
         self.create_lobby = Create()
+        self.options = Options()
+        self.ready = Ready()
         self.initilize_seats()
         self.initilize_sprites()
         self.draw = Draw(
-            self.screen, self.home_page, self.join_lobby, self.create_lobby
+            self.screen,
+            self.home_page,
+            self.join_lobby,
+            self.create_lobby,
+            self.options,
+            self.ready,
         )
 
     # Attempt to connect to the server
@@ -72,6 +82,13 @@ class Game:
                 self.connect_to_server(
                     self.create_lobby.external_ip, self.create_lobby.port
                 )
+
+    # See if the server has started the game
+    def check_if_game_started(self, game_started):
+        if not self.game_started:
+            if game_started:
+                self.game_started = game_started
+                self.player_list[self.client.id].previous_action = ""
 
     # Initilize the position where each player will be sitting
     def initilize_seats(self):
@@ -243,6 +260,41 @@ class Game:
                         self.create_lobby.exit_rect.collidepoint(event.pos)
                     )
 
+            # If the user is in the game
+            else:
+                if event.type == pg.MOUSEBUTTONUP:
+                    # If the game hasn't started yet
+                    if not self.game_started:
+                        # If the user readys up
+                        if self.ready.ready_rect.collidepoint(event.pos):
+                            if self.ready.is_ready:
+                                self.player_list[
+                                    self.client.id
+                                ].previous_action = "Not ready"
+                                self.ready.is_ready = False
+                            else:
+                                self.player_list[
+                                    self.client.id
+                                ].previous_action = "Ready"
+                                self.ready.is_ready = True
+
+                    # If it is your turn
+                    if self.turn == self.client.id:
+                        # If the user clicks the fold option
+                        if self.options.fold_rect.collidepoint(event.pos):
+                            self.player_list[self.turn].move.append("fold")
+
+                if event.type == pg.MOUSEMOTION:
+                    self.options.fold_active = self.options.fold_rect.collidepoint(
+                        event.pos
+                    )
+                    self.options.call_active = self.options.call_rect.collidepoint(
+                        event.pos
+                    )
+                    self.options.raise_active = self.options.raise_rect.collidepoint(
+                        event.pos
+                    )
+
     def run(self):
         clock = pg.time.Clock()
         while True:
@@ -260,10 +312,30 @@ class Game:
                 self.screen.fill((0, 120, 0))
                 self.draw.draw_create_lobby()
             else:
-                self.screen.fill((255, 255, 255))
+                self.screen.fill((180, 160, 160))
+
+                if self.game_started:
+                    # If it's your turn, display possible options
+                    if self.turn == self.client.id:
+                        self.draw.draw_options()
+                else:
+                    self.draw.draw_ready_option()
+
+                # Send your player data over
                 self.client.send_object(self.player_list[self.client.id])
+
+                # Receive the other player data back
                 data = self.client.receive_object()
+
+                # Sync the players data
                 self.client.sync_players(self.player_list, data.player_list)
+
+                # Check if the game is started
+                self.check_if_game_started(data.game_started)
+
+                # Update turn
+                self.turn = data.turn
+
                 self.draw.draw_table()
                 self.draw.draw_sprites(self.player_list, data.players_connected)
 
