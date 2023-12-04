@@ -10,6 +10,8 @@ import pygame as pg
 import os
 import subprocess
 
+WIDTH = 1600
+HEIGHT = 900
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
@@ -18,19 +20,21 @@ pg.init()
 
 class Game:
     def __init__(self):
-        self.screen = pg.display.set_mode((500, 500))
+        self.screen = pg.display.set_mode((WIDTH, HEIGHT))
         self.sprite_diameter = 50
         self.turn = 0
         self.game_started = False
         self.overhead_message = ""
         self.player_list = [Player(0), Player(1), Player(2), Player(3)]
         self.client = Client()
-        self.home_page = Home()
-        self.join_lobby = Join()
-        self.create_lobby = Create()
+        self.home_page = Home(WIDTH)
+        self.join_lobby = Join(WIDTH)
+        self.create_lobby = Create(WIDTH)
         self.options = Options()
         self.ready = Ready()
         self.draw = Draw(
+            WIDTH,
+            HEIGHT,
             self.screen,
             self.home_page,
             self.join_lobby,
@@ -93,6 +97,10 @@ class Game:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
+
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_ESCAPE:
+                    pg.quit()
 
             # If the user is in the home page
             if self.home_page.in_home:

@@ -2,7 +2,11 @@ import pygame as pg
 
 
 class Draw:
-    def __init__(self, screen, home_page, join_lobby, create_lobby, options, ready):
+    def __init__(
+        self, width, height, screen, home_page, join_lobby, create_lobby, options, ready
+    ):
+        self.width = width
+        self.height = height
         self.screen = screen
         self.home_page = home_page
         self.join_lobby = join_lobby
@@ -10,9 +14,10 @@ class Draw:
         self.options = options
         self.ready = ready
         self.xs_font = pg.font.Font(None, 16)
-        self.sm_font = pg.font.Font(None, 24)
-        self.md_font = pg.font.Font(None, 32)
-        self.lg_font = pg.font.Font(None, 64)
+        self.sm_font = pg.font.Font(None, 32)
+        self.md_font = pg.font.Font(None, 64)
+        self.lg_font = pg.font.Font(None, 128)
+        self.xl_font = pg.font.Font(None, 200)
 
     def draw_overhead_message(self, message):
         overhead_message_text_surface = self.md_font.render(message, True, (0, 0, 0))
@@ -186,8 +191,11 @@ class Draw:
     # Draw the home page
     def draw_home(self):
         # Draw home title
-        title_text_surface = self.lg_font.render("Local Poker", True, (255, 255, 255))
-        self.screen.blit(title_text_surface, (120, 40))
+        title_text_surface = self.xl_font.render("Local Poker", True, (255, 255, 255))
+        self.screen.blit(
+            title_text_surface,
+            ((self.width / 2) - (title_text_surface.get_width() / 2), 150),
+        )
 
         # Draw join button
         if self.home_page.join_active:
@@ -302,6 +310,15 @@ class Draw:
                 self.screen, (0, 120, 0), self.join_lobby.exit_rect, border_radius=50
             )
 
+        # Draw the "Join Lobby" text
+        join_title_text_surface = self.lg_font.render(
+            "Join Lobby", True, (255, 255, 255)
+        )
+        self.screen.blit(
+            join_title_text_surface,
+            ((self.width / 2) - (join_title_text_surface.get_width() / 2), 40),
+        )
+
         # Draw the "Connect" text
         connect_text_surface = self.md_font.render("Connect", True, (0, 0, 0))
         self.screen.blit(
@@ -373,7 +390,7 @@ class Draw:
         )
 
         # Draw the dyanmic name text
-        dynamic_name_text_surface = self.md_font.render(
+        dynamic_name_text_surface = self.sm_font.render(
             self.join_lobby.name, True, (0, 0, 0)
         )
         self.screen.blit(
@@ -387,7 +404,14 @@ class Draw:
 
         # Draw the X
         exit_text_surface = self.md_font.render("X", True, (255, 0, 0))
-        self.screen.blit(exit_text_surface, (20, 17))
+        self.screen.blit(
+            exit_text_surface,
+            (
+                self.join_lobby.exit_rect.centerx - (exit_text_surface.get_width() / 2),
+                self.join_lobby.exit_rect.centery
+                - (exit_text_surface.get_height() / 2),
+            ),
+        )
 
         # Draw the "Failed to connect" text
         if self.join_lobby.failed_to_connect:
@@ -397,8 +421,8 @@ class Draw:
             self.screen.blit(
                 failed_text_surface,
                 (
-                    self.join_lobby.connect_rect.centerx - 80,
-                    self.join_lobby.connect_rect.centery + 30,
+                    (self.width / 2) - (failed_text_surface.get_width() / 2),
+                    self.join_lobby.connect_rect.centery + 50,
                 ),
             )
 
@@ -480,6 +504,15 @@ class Draw:
                 self.screen, (0, 120, 0), self.create_lobby.exit_rect, border_radius=50
             )
 
+        # Draw the "Create Lobby" text
+        create_title_text_surface = self.lg_font.render(
+            "Create Lobby", True, (255, 255, 255)
+        )
+        self.screen.blit(
+            create_title_text_surface,
+            ((self.width / 2) - (create_title_text_surface.get_width() / 2), 40),
+        )
+
         # Draw the "Create" text
         connect_text_surface = self.md_font.render("Create", True, (0, 0, 0))
         self.screen.blit(
@@ -558,7 +591,15 @@ class Draw:
 
         # Draw the X
         exit_text_surface = self.md_font.render("X", True, (255, 0, 0))
-        self.screen.blit(exit_text_surface, (20, 17))
+        self.screen.blit(
+            exit_text_surface,
+            (
+                self.create_lobby.exit_rect.centerx
+                - (exit_text_surface.get_width() / 2),
+                self.create_lobby.exit_rect.centery
+                - (exit_text_surface.get_height() / 2),
+            ),
+        )
 
         # Draw the "Failed to create" text
         if self.create_lobby.failed_to_create:
@@ -568,7 +609,7 @@ class Draw:
             self.screen.blit(
                 failed_text_surface,
                 (
-                    self.create_lobby.create_rect.centerx - 80,
+                    (self.width / 2 - failed_text_surface.get_width() / 2),
                     self.create_lobby.create_rect.centery + 50,
                 ),
             )
@@ -579,7 +620,7 @@ class Draw:
             self.screen.blit(
                 success_text_surface,
                 (
-                    self.create_lobby.create_rect.centerx - 80,
+                    (self.width / 2 - success_text_surface.get_width() / 2),
                     self.create_lobby.create_rect.centery + 50,
                 ),
             )
