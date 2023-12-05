@@ -3,7 +3,14 @@ import pygame as pg
 
 class Draw:
     def __init__(
-        self, width, height, screen, home_page, join_lobby, create_lobby, options, ready
+        self,
+        width,
+        height,
+        screen,
+        home_page,
+        join_lobby,
+        create_lobby,
+        options,
     ):
         self.width = width
         self.height = height
@@ -12,42 +19,110 @@ class Draw:
         self.join_lobby = join_lobby
         self.create_lobby = create_lobby
         self.options = options
-        self.ready = ready
+        self.poker_table = pg.image.load("./images/poker_table.png")
         self.xs_font = pg.font.Font(None, 16)
         self.sm_font = pg.font.Font(None, 32)
         self.md_font = pg.font.Font(None, 64)
         self.lg_font = pg.font.Font(None, 128)
         self.xl_font = pg.font.Font(None, 200)
 
+    # Draw the base poker table
+    def draw_table(self):
+        poker_table = pg.transform.scale_by(self.poker_table, 1.5)
+        self.screen.blit(
+            poker_table,
+            (
+                self.width / 2 - poker_table.get_width() / 2,
+                self.height / 2 - poker_table.get_height() / 2,
+            ),
+        )
+
+    # Draw the overhead message
     def draw_overhead_message(self, message):
         overhead_message_text_surface = self.md_font.render(message, True, (0, 0, 0))
         self.screen.blit(
             overhead_message_text_surface,
-            (250 - (overhead_message_text_surface.get_width() / 2), 5),
+            (self.width / 2 - overhead_message_text_surface.get_width() / 2, 50),
+        )
+
+    # Draw the view cards button
+    def draw_view_cards(self):
+        if self.options.view_cards_active:
+            pg.draw.rect(
+                self.screen,
+                self.options.active_color,
+                self.options.view_cards_rect,
+                border_radius=30,
+            )
+        else:
+            pg.draw.rect(
+                self.screen,
+                self.options.passive_color,
+                self.options.view_cards_rect,
+                border_radius=30,
+            )
+
+        # Draw the "View Cards" text
+        view_cards_text_surface = self.sm_font.render("View Cards", True, (0, 0, 0))
+        self.screen.blit(
+            view_cards_text_surface,
+            (
+                self.options.view_cards_rect.centerx
+                - (view_cards_text_surface.get_width() / 2),
+                self.options.view_cards_rect.centery
+                - (view_cards_text_surface.get_height() / 2),
+            ),
         )
 
     # Draw the ready up button
-    def draw_ready_option(self):
-        if self.ready.is_ready:
+    def draw_ready_option(self, ready):
+        if ready.is_ready:
             pg.draw.rect(
-                self.screen, (190, 190, 190), self.ready.ready_rect, border_radius=50
+                self.screen, (190, 190, 190), ready.ready_rect, border_radius=50
             )
             pg.draw.rect(
                 self.screen,
-                self.ready.ready_color,
-                self.ready.selected_ready_rect,
+                ready.ready_color,
+                ready.selected_ready_rect,
                 border_radius=50,
             )
         else:
             pg.draw.rect(
-                self.screen, (190, 190, 190), self.ready.ready_rect, border_radius=50
+                self.screen, (190, 190, 190), ready.ready_rect, border_radius=50
             )
             pg.draw.rect(
                 self.screen,
-                self.ready.not_ready_color,
-                self.ready.selected_ready_rect,
+                ready.not_ready_color,
+                ready.selected_ready_rect,
                 border_radius=50,
             )
+
+    # Draw the deal cards option
+    def draw_deal_option(self):
+        if self.options.deal_active:
+            pg.draw.rect(
+                self.screen,
+                self.options.active_color,
+                self.options.deal_rect,
+                border_radius=30,
+            )
+        else:
+            pg.draw.rect(
+                self.screen,
+                self.options.passive_color,
+                self.options.deal_rect,
+                border_radius=30,
+            )
+
+        # Draw the "Deal" text
+        deal_text_surface = self.md_font.render("Deal", True, (0, 0, 0))
+        self.screen.blit(
+            deal_text_surface,
+            (
+                self.options.deal_rect.centerx - (deal_text_surface.get_width() / 2),
+                self.options.deal_rect.centery - (deal_text_surface.get_height() / 2),
+            ),
+        )
 
     # Draw the options for a turn
     def draw_options(self):
@@ -178,15 +253,6 @@ class Draw:
                         - 5,
                     ),
                 )
-
-    # Draw the base poker table
-    def draw_table(self):
-        wood_section = pg.Rect(100, 100, 300, 250)
-        gold_section = pg.Rect(115, wood_section.top + 15, 270, 220)
-        felt_section = pg.Rect(120, gold_section.top + 5, 260, 210)
-        pg.draw.rect(self.screen, (70, 50, 5), wood_section, border_radius=15)
-        pg.draw.rect(self.screen, (204, 204, 0), gold_section, border_radius=15)
-        pg.draw.rect(self.screen, (0, 100, 0), felt_section, border_radius=15)
 
     # Draw the home page
     def draw_home(self):

@@ -22,9 +22,9 @@ class Player:
 
     # Initilize the position where each player will be sitting
     def initilize_seat(self, id):
-        seat_positions = [(200, 350), (0, 200), (200, 40), (400, 200)]
+        seat_positions = [(755, 670), (250, 415), (755, 160), (1250, 415)]
         return seat_positions[id]
 
     # Initilize the player sprite
     def initilize_sprite(self):
-        return pg.Rect(self.seat[0], self.seat[1], 100, 60)
+        return pg.Rect(self.seat[0], self.seat[1], 100, 70)

@@ -24,14 +24,14 @@ class Game:
         self.sprite_diameter = 50
         self.turn = 0
         self.game_started = False
+        self.has_dealt = False
         self.overhead_message = ""
         self.player_list = [Player(0), Player(1), Player(2), Player(3)]
         self.client = Client()
         self.home_page = Home(WIDTH)
         self.join_lobby = Join(WIDTH)
         self.create_lobby = Create(WIDTH)
-        self.options = Options()
-        self.ready = Ready()
+        self.options = Options(WIDTH)
         self.draw = Draw(
             WIDTH,
             HEIGHT,
@@ -40,7 +40,6 @@ class Game:
             self.join_lobby,
             self.create_lobby,
             self.options,
-            self.ready,
         )
 
     # Attempt to connect to the server
@@ -66,6 +65,7 @@ class Game:
                 self.create_lobby.external_ip = ""
                 self.create_lobby.port = ""
                 self.player_list[0].name = "Host"
+            self.ready = Ready(self.player_list, self.client.id)
 
     # Attempt to create lobby
     def create(self):
@@ -86,11 +86,17 @@ class Game:
                 )
 
     # See if the server has started the game
-    def check_if_game_started(self, game_started, dealer):
+    def check_if_game_started(self, game_started):
         if not self.game_started:
             if game_started:
                 self.game_started = game_started
                 self.player_list[self.client.id].previous_action = ""
+
+    # Check if the dealer has dealt
+    def check_if_has_dealt(self, has_dealt):
+        if not self.has_dealt:
+            if has_dealt:
+                self.has_dealt = has_dealt
 
     # Handle user input
     def handle_input(self):
@@ -256,42 +262,58 @@ class Game:
                     )
 
             # If the user is in the game
-            else:
+            elif not self.game_started:
                 if event.type == pg.MOUSEBUTTONUP:
-                    # If the game hasn't started yet
-                    if not self.game_started:
-                        # If the user readys up
-                        if self.ready.ready_rect.collidepoint(event.pos):
-                            if self.ready.is_ready:
-                                self.player_list[
-                                    self.client.id
-                                ].previous_action = "Not ready"
-                                self.ready.is_ready = False
-                            else:
-                                self.player_list[
-                                    self.client.id
-                                ].previous_action = "Ready"
-                                self.ready.is_ready = True
+                    # If the user readys up
+                    if self.ready.ready_rect.collidepoint(event.pos):
+                        if self.ready.is_ready:
+                            self.player_list[
+                                self.client.id
+                            ].previous_action = "Not ready"
+                            self.ready.is_ready = False
+                        else:
+                            self.player_list[self.client.id].previous_action = "Ready"
+                            self.ready.is_ready = True
 
-                    # If it is your turn
-                    if self.turn == self.client.id:
-                        # If the user clicks the fold option
-                        if self.options.fold_rect.collidepoint(event.pos):
-                            self.player_list[self.client.id].move.append("fold")
-                            self.player_list[self.client.id].move.append(
-                                f"{self.player_list[self.client.id].name} has folded"
+            # If the game has started
+            elif self.game_started:
+                if self.turn == self.client.id:
+                    # If the dealer hasn't dealt
+                    if not self.has_dealt:
+                        # Clicks the deal button
+                        if event.type == pg.MOUSEBUTTONUP:
+                            self.player_list[self.client.id].move.append("deal")
+
+                        # Mouse motion
+                        if event.type == pg.MOUSEMOTION:
+                            self.options.deal_active = (
+                                self.options.deal_rect.collidepoint(event.pos)
                             )
 
-                if event.type == pg.MOUSEMOTION:
-                    self.options.fold_active = self.options.fold_rect.collidepoint(
-                        event.pos
-                    )
-                    self.options.call_active = self.options.call_rect.collidepoint(
-                        event.pos
-                    )
-                    self.options.raise_active = self.options.raise_rect.collidepoint(
-                        event.pos
-                    )
+                    # If the dealer has dealt
+                    elif self.has_dealt:
+                        if event.type == pg.MOUSEBUTTONUP:
+                            # If the user clicks the fold option
+                            if self.options.fold_rect.collidepoint(event.pos):
+                                self.player_list[self.client.id].move.append("fold")
+
+                            # If the user clicks the view cards button
+                            if self.options.view_cards_rect.collidepoint(event.pos):
+                                self.player_list[self.client.id].print_deck()
+
+                        elif event.type == pg.MOUSEMOTION:
+                            self.options.fold_active = (
+                                self.options.fold_rect.collidepoint(event.pos)
+                            )
+                            self.options.call_active = (
+                                self.options.call_rect.collidepoint(event.pos)
+                            )
+                            self.options.raise_active = (
+                                self.options.raise_rect.collidepoint(event.pos)
+                            )
+                            self.options.view_cards_active = (
+                                self.options.view_cards_rect.collidepoint(event.pos)
+                            )
 
     def run(self):
         clock = pg.time.Clock()
@@ -315,9 +337,13 @@ class Game:
                 if self.game_started:
                     # If it's your turn, display possible options
                     if self.turn == self.client.id:
-                        self.draw.draw_options()
+                        if not self.has_dealt:
+                            self.draw.draw_deal_option()
+                        else:
+                            self.draw.draw_options()
+                            self.draw.draw_view_cards()
                 else:
-                    self.draw.draw_ready_option()
+                    self.draw.draw_ready_option(self.ready)
 
                 # Send your player data over
                 self.client.send_object(self.player_list[self.client.id])
@@ -329,7 +355,8 @@ class Game:
                 self.client.sync_players(self.player_list, data.player_list)
 
                 # Check if the game is started
-                self.check_if_game_started(data.game_started, data.dealer)
+                self.check_if_game_started(data.game_started)
+                self.check_if_has_dealt(data.has_dealt)
 
                 self.overhead_message = data.overhead_message
 
