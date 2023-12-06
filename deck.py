@@ -1,5 +1,6 @@
 from card import Card
 import random
+import pygame as pg
 
 
 class Deck:
@@ -7,6 +8,7 @@ class Deck:
         self.deck = []
         self.generate_deck()
         self.shuffle_deck()
+        self.initilize_positions()
 
     # Generate a deck of 52 cards
     def generate_deck(self):
@@ -18,9 +20,15 @@ class Deck:
     def shuffle_deck(self):
         random.shuffle(self.deck)
 
+    # Initilize card positions
+    def initilize_positions(self):
+        for index in range(len(self.deck)):
+            self.deck[index].position = (935 + index / 10, 420 - index / 10)
+
     # Draw a card from the deck
     def draw_card(self):
-        return self.deck.pop(random.randrange(0, len(self.deck)))
+        if len(self.deck) > 0:
+            return self.deck.pop()
 
     # Print the deck
     def print_deck(self):

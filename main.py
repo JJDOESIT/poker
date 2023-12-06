@@ -25,6 +25,7 @@ class Game:
         self.turn = 0
         self.game_started = False
         self.has_dealt = False
+        self.is_dealing = False
         self.overhead_message = ""
         self.player_list = [Player(0), Player(1), Player(2), Player(3)]
         self.client = Client()
@@ -364,7 +365,8 @@ class Game:
                 self.turn = data.turn
 
                 self.draw.draw_overhead_message(self.overhead_message)
-                self.draw.draw_table()
+                self.draw.draw_table(data.deck)
+                self.draw.draw_all_player_cards(data.all_player_cards)
                 self.draw.draw_sprites(self.player_list, data.players_connected)
 
             pg.display.flip()

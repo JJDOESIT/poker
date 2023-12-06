@@ -3,14 +3,7 @@ import pygame as pg
 
 class Draw:
     def __init__(
-        self,
-        width,
-        height,
-        screen,
-        home_page,
-        join_lobby,
-        create_lobby,
-        options,
+        self, width, height, screen, home_page, join_lobby, create_lobby, options
     ):
         self.width = width
         self.height = height
@@ -19,6 +12,7 @@ class Draw:
         self.join_lobby = join_lobby
         self.create_lobby = create_lobby
         self.options = options
+        self.card_back = pg.image.load("./images/cards/card_back.png")
         self.poker_table = pg.image.load("./images/poker_table.png")
         self.xs_font = pg.font.Font(None, 16)
         self.sm_font = pg.font.Font(None, 32)
@@ -26,8 +20,17 @@ class Draw:
         self.lg_font = pg.font.Font(None, 128)
         self.xl_font = pg.font.Font(None, 200)
 
+    # Draw the players cards
+    def draw_all_player_cards(self, card_list):
+        for card_set in card_list:
+            for card in card_set:
+                card_back = pg.transform.scale(self.card_back, (40, 60))
+                if card.orientation == "horizontal":
+                    card_back = pg.transform.rotate(card_back, 90)
+                self.screen.blit(card_back, card.position)
+
     # Draw the base poker table
-    def draw_table(self):
+    def draw_table(self, deck):
         poker_table = pg.transform.scale_by(self.poker_table, 1.5)
         self.screen.blit(
             poker_table,
@@ -36,6 +39,11 @@ class Draw:
                 self.height / 2 - poker_table.get_height() / 2,
             ),
         )
+
+        # Draw the deck of cards
+        card_back = pg.transform.scale(self.card_back, (40, 60))
+        for card in deck.deck:
+            self.screen.blit(card_back, card.position)
 
     # Draw the overhead message
     def draw_overhead_message(self, message):
