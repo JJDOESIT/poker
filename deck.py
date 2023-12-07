@@ -1,4 +1,5 @@
 from card import Card
+from vector import Vector
 import random
 import pygame as pg
 
@@ -23,7 +24,8 @@ class Deck:
     # Initilize card positions
     def initilize_positions(self):
         for index in range(len(self.deck)):
-            self.deck[index].position = (935 + index / 10, 420 - index / 10)
+            self.deck[index].position.x = 935 + index / 10
+            self.deck[index].position.y = 420 - index / 10
 
     # Draw a card from the deck
     def draw_card(self):

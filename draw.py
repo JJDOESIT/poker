@@ -22,12 +22,11 @@ class Draw:
 
     # Draw the players cards
     def draw_all_player_cards(self, card_list):
-        for card_set in card_list:
-            for card in card_set:
+        for card_set in card_list.values():
+            for card in card_set[0]:
                 card_back = pg.transform.scale(self.card_back, (40, 60))
-                if card.orientation == "horizontal":
-                    card_back = pg.transform.rotate(card_back, 90)
-                self.screen.blit(card_back, card.position)
+                card_back = pg.transform.rotate(card_back, card.angle)
+                self.screen.blit(card_back, (card.position.x, card.position.y))
 
     # Draw the base poker table
     def draw_table(self, deck):
@@ -43,7 +42,7 @@ class Draw:
         # Draw the deck of cards
         card_back = pg.transform.scale(self.card_back, (40, 60))
         for card in deck.deck:
-            self.screen.blit(card_back, card.position)
+            self.screen.blit(card_back, (card.position.x, card.position.y))
 
     # Draw the overhead message
     def draw_overhead_message(self, message):

@@ -23,6 +23,7 @@ class Game:
         self.screen = pg.display.set_mode((WIDTH, HEIGHT))
         self.sprite_diameter = 50
         self.turn = 0
+
         self.game_started = False
         self.has_dealt = False
         self.is_dealing = False
@@ -72,7 +73,13 @@ class Game:
     def create(self):
         if not len(self.create_lobby.port) > 0:
             return
-        result = subprocess.Popen(["py", "testBind.py", self.create_lobby.port])
+        result = subprocess.Popen(
+            ["py", "testBind.py", self.create_lobby.port],
+            close_fds=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            stdin=subprocess.DEVNULL,
+        )
         result.wait()
         self.create_lobby.reset()
         if result.returncode == 1:
@@ -92,6 +99,10 @@ class Game:
             if game_started:
                 self.game_started = game_started
                 self.player_list[self.client.id].previous_action = ""
+
+    # Check if the dealing animation is occuring
+    def check_if_is_dealing(self, is_dealing):
+        self.is_dealing = is_dealing
 
     # Check if the dealer has dealt
     def check_if_has_dealt(self, has_dealt):
@@ -278,6 +289,7 @@ class Game:
 
             # If the game has started
             elif self.game_started:
+                # If it's your turn
                 if self.turn == self.client.id:
                     # If the dealer hasn't dealt
                     if not self.has_dealt:
@@ -285,22 +297,18 @@ class Game:
                         if event.type == pg.MOUSEBUTTONUP:
                             self.player_list[self.client.id].move.append("deal")
 
-                        # Mouse motion
+                        # Hovers over deal button
                         if event.type == pg.MOUSEMOTION:
                             self.options.deal_active = (
                                 self.options.deal_rect.collidepoint(event.pos)
                             )
 
-                    # If the dealer has dealt
-                    elif self.has_dealt:
+                    # If the dealer has dealt and the dealing animation isn't occuring
+                    elif self.has_dealt and not self.is_dealing:
                         if event.type == pg.MOUSEBUTTONUP:
                             # If the user clicks the fold option
                             if self.options.fold_rect.collidepoint(event.pos):
                                 self.player_list[self.client.id].move.append("fold")
-
-                            # If the user clicks the view cards button
-                            if self.options.view_cards_rect.collidepoint(event.pos):
-                                self.player_list[self.client.id].print_deck()
 
                         elif event.type == pg.MOUSEMOTION:
                             self.options.fold_active = (
@@ -312,9 +320,17 @@ class Game:
                             self.options.raise_active = (
                                 self.options.raise_rect.collidepoint(event.pos)
                             )
-                            self.options.view_cards_active = (
-                                self.options.view_cards_rect.collidepoint(event.pos)
-                            )
+
+                # If it's not your turn and the dealer has dealt and the dealing animation isn't occuring
+                if self.has_dealt and not self.is_dealing:
+                    if event.type == pg.MOUSEBUTTONUP:
+                        # If the user clicks the view cards button
+                        if self.options.view_cards_rect.collidepoint(event.pos):
+                            self.player_list[self.client.id].print_deck()
+                    elif event.type == pg.MOUSEMOTION:
+                        self.options.view_cards_active = (
+                            self.options.view_cards_rect.collidepoint(event.pos)
+                        )
 
     def run(self):
         clock = pg.time.Clock()
@@ -334,15 +350,18 @@ class Game:
                 self.draw.draw_create_lobby()
             else:
                 self.screen.fill((180, 160, 160))
-
                 if self.game_started:
-                    # If it's your turn, display possible options
+                    # If it's your turn
                     if self.turn == self.client.id:
+                        # If the dealer hasn't dealt
                         if not self.has_dealt:
                             self.draw.draw_deal_option()
-                        else:
+                        # If the dealing animation is not occuring
+                        elif not self.is_dealing:
                             self.draw.draw_options()
-                            self.draw.draw_view_cards()
+                    # If the dealer has dealt and the animation isn't occuring
+                    if self.has_dealt and not self.is_dealing:
+                        self.draw.draw_view_cards()
                 else:
                     self.draw.draw_ready_option(self.ready)
 
@@ -358,6 +377,7 @@ class Game:
                 # Check if the game is started
                 self.check_if_game_started(data.game_started)
                 self.check_if_has_dealt(data.has_dealt)
+                self.check_if_is_dealing(data.is_dealing)
 
                 self.overhead_message = data.overhead_message
 

@@ -11,5 +11,11 @@ except:
     exit(1)
 
 test_socket.close()
-subprocess.Popen(["start", "py", "server.py", argv[1]], shell=True)
+subprocess.Popen(
+    ["start", "py", "server.py", argv[1]],
+    shell=True,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.STDOUT,
+    stdin=subprocess.DEVNULL,
+)
 exit(0)
