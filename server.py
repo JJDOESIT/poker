@@ -1,10 +1,15 @@
 import pickle
 import _thread
-from data import Data
-from sys import argv
 import socket
 
-data = Data()
+
+from sys import argv
+from server.data import Data
+from server.ready import Ready
+from server.actions import Actions
+from server.deal import Deal
+from server.bets import Bets
+
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 address = ("0.0.0.0", int(argv[1]))
@@ -12,9 +17,15 @@ s.bind(address)
 print(f"Listening on port {argv[1]} ...")
 s.listen(4)
 
+data = Data()
+ready = Ready(data)
+actions = Actions(data)
+deal = Deal(data)
+bets = Bets(data)
+
 
 def thread(client_socket):
-    global data
+    global data, deal, actions
     personal_id = None
 
     try:
@@ -33,14 +44,20 @@ def thread(client_socket):
             recv_data = client_socket.recv(8192)
             recv_data = pickle.loads(recv_data)
             data.sync_players(recv_data, personal_id)
-            data.deal_cards(personal_id)
-            data.handle_ready_up(recv_data, personal_id)
-            data.handle_move(recv_data, personal_id)
+            ready.handle_ready_up(recv_data, personal_id)
+            actions.handle_move(recv_data, personal_id)
+            bets.initilize_betting_players()
+            deal.deal_cards(personal_id)
+
         # If no data is received, disconnect the player
         except:
             print(f"Client {personal_id} disconnected")
             data.players_connected[personal_id] = "open"
-            data.check_for_reset()
+            bets.check_for_redo(personal_id)
+            if data.host == personal_id:
+                data.host = data.increament_turn(data.host)
+            deal.check_for_redo(personal_id)
+
             break
         # Send the other players data back
         try:

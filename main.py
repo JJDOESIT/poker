@@ -1,14 +1,18 @@
-from player import Player
-from join import Join
-from client import Client
-from home import Home
-from create import Create
-from options import Options
-from draw import Draw
-from ready import Ready
-import pygame as pg
 import os
 import subprocess
+import pygame as pg
+
+from client_server.player import Player
+from client.join import Join
+from client.client import Client
+from client.home import Home
+from client.create import Create
+from client.options import Options
+from client.draw import Draw
+from client.ante import Ante
+from client.blinds import Blinds
+from client.ready import Ready
+
 
 WIDTH = 1600
 HEIGHT = 900
@@ -22,17 +26,13 @@ class Game:
     def __init__(self):
         self.screen = pg.display.set_mode((WIDTH, HEIGHT))
         self.sprite_diameter = 50
-        self.turn = 0
-
-        self.game_started = False
-        self.has_dealt = False
-        self.is_dealing = False
-        self.overhead_message = ""
         self.player_list = [Player(0), Player(1), Player(2), Player(3)]
         self.client = Client()
         self.home_page = Home(WIDTH)
         self.join_lobby = Join(WIDTH)
         self.create_lobby = Create(WIDTH)
+        self.ante = Ante(WIDTH)
+        self.blinds = Blinds(WIDTH)
         self.options = Options(WIDTH)
         self.draw = Draw(
             WIDTH,
@@ -41,6 +41,8 @@ class Game:
             self.home_page,
             self.join_lobby,
             self.create_lobby,
+            self.ante,
+            self.blinds,
             self.options,
         )
 
@@ -74,7 +76,7 @@ class Game:
         if not len(self.create_lobby.port) > 0:
             return
         result = subprocess.Popen(
-            ["py", "testBind.py", self.create_lobby.port],
+            ["py", "server/testBind.py", self.create_lobby.port],
             close_fds=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -93,25 +95,8 @@ class Game:
                     self.create_lobby.external_ip, self.create_lobby.port
                 )
 
-    # See if the server has started the game
-    def check_if_game_started(self, game_started):
-        if not self.game_started:
-            if game_started:
-                self.game_started = game_started
-                self.player_list[self.client.id].previous_action = ""
-
-    # Check if the dealing animation is occuring
-    def check_if_is_dealing(self, is_dealing):
-        self.is_dealing = is_dealing
-
-    # Check if the dealer has dealt
-    def check_if_has_dealt(self, has_dealt):
-        if not self.has_dealt:
-            if has_dealt:
-                self.has_dealt = has_dealt
-
     # Handle user input
-    def handle_input(self):
+    def handle_input(self, data=None):
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 pg.quit()
@@ -274,28 +259,128 @@ class Game:
                     )
 
             # If the user is in the game
-            elif not self.game_started:
-                if event.type == pg.MOUSEBUTTONUP:
-                    # If the user readys up
-                    if self.ready.ready_rect.collidepoint(event.pos):
-                        if self.ready.is_ready:
-                            self.player_list[
-                                self.client.id
-                            ].previous_action = "Not ready"
-                            self.ready.is_ready = False
-                        else:
-                            self.player_list[self.client.id].previous_action = "Ready"
-                            self.ready.is_ready = True
+            elif not data.game_started:
+                # If the ante has not been set
+                if data.ante is None:
+                    # If you are the host
+                    if self.client.id == data.host:
+                        if event.type == pg.MOUSEMOTION:
+                            # If the user hovers over the poker chips
+                            if self.ante.two_dollar_rect.collidepoint(event.pos):
+                                self.ante.two_dollar_rect.y = self.ante.active_y
+                            else:
+                                self.ante.two_dollar_rect.y = self.ante.passive_y
+                            if self.ante.five_dollar_rect.collidepoint(event.pos):
+                                self.ante.five_dollar_rect.y = self.ante.active_y
+                            else:
+                                self.ante.five_dollar_rect.y = self.ante.passive_y
+                            if self.ante.ten_dollar_rect.collidepoint(event.pos):
+                                self.ante.ten_dollar_rect.y = self.ante.active_y
+                            else:
+                                self.ante.ten_dollar_rect.y = self.ante.passive_y
+                            if self.ante.twenty_dollar_rect.collidepoint(event.pos):
+                                self.ante.twenty_dollar_rect.y = self.ante.active_y
+                            else:
+                                self.ante.twenty_dollar_rect.y = self.ante.passive_y
+
+                        if event.type == pg.MOUSEBUTTONUP:
+                            # If the user selects an ante
+                            if self.ante.two_dollar_rect.collidepoint(event.pos):
+                                self.player_list[self.client.id].add_move("ante", [2])
+                            if self.ante.five_dollar_rect.collidepoint(event.pos):
+                                self.player_list[self.client.id].add_move("ante", [5])
+                            if self.ante.ten_dollar_rect.collidepoint(event.pos):
+                                self.player_list[self.client.id].add_move("ante", [10])
+                            if self.ante.twenty_dollar_rect.collidepoint(event.pos):
+                                self.player_list[self.client.id].add_move("ante", [20])
+
+                # If the ante has been set
+                else:
+                    if event.type == pg.MOUSEBUTTONUP:
+                        # If the user readys up
+                        if self.ready.ready_rect.collidepoint(event.pos):
+                            if self.ready.is_ready:
+                                self.player_list[
+                                    self.client.id
+                                ].previous_action = "Not ready"
+                                self.ready.is_ready = False
+                            else:
+                                self.player_list[
+                                    self.client.id
+                                ].previous_action = "Ready"
+                                self.ready.is_ready = True
 
             # If the game has started
-            elif self.game_started:
-                # If it's your turn
-                if self.turn == self.client.id:
-                    # If the dealer hasn't dealt
-                    if not self.has_dealt:
+            elif data.game_started:
+                # If you are the small blind
+                if (
+                    data.small_blind_bet == 0
+                    and data.small_blind_player == self.client.id
+                ):
+                    if event.type == pg.MOUSEBUTTONUP:
+                        if (
+                            self.blinds.one_dollar_rect.collidepoint(event.pos)
+                            and self.blinds.active_blind == "one_dollar"
+                        ):
+                            self.player_list[self.client.id].add_move(
+                                "small_blind", [1]
+                            )
+                        elif (
+                            self.blinds.two_dollar_rect.collidepoint(event.pos)
+                            and self.blinds.active_blind == "two_dollar"
+                        ):
+                            self.player_list[self.client.id].add_move(
+                                "small_blind", [2]
+                            )
+                        elif (
+                            self.blinds.five_dollar_rect.collidepoint(event.pos)
+                            and self.blinds.active_blind == "five_dollar"
+                        ):
+                            self.player_list[self.client.id].add_move(
+                                "small_blind", [5]
+                            )
+                        elif (
+                            self.blinds.ten_dollar_rect.collidepoint(event.pos)
+                            and self.blinds.active_blind == "ten_dollar"
+                        ):
+                            self.player_list[self.client.id].add_move(
+                                "small_blind", [10]
+                            )
+                # Else if you're the big blind
+                elif (
+                    data.small_blind_bet != 0
+                    and data.big_blind_bet == 0
+                    and data.big_blind_player == self.client.id
+                ):
+                    if event.type == pg.MOUSEBUTTONUP:
+                        if (
+                            self.blinds.two_dollar_rect.collidepoint(event.pos)
+                            and self.blinds.active_blind == "two_dollar"
+                        ):
+                            self.player_list[self.client.id].add_move("big_blind", [2])
+                        elif (
+                            self.blinds.five_dollar_rect.collidepoint(event.pos)
+                            and self.blinds.active_blind == "five_dollar"
+                        ):
+                            self.player_list[self.client.id].add_move("big_blind", [5])
+                        elif (
+                            self.blinds.ten_dollar_rect.collidepoint(event.pos)
+                            and self.blinds.active_blind == "ten_dollar"
+                        ):
+                            self.player_list[self.client.id].add_move("big_blind", [10])
+                        elif (
+                            self.blinds.twenty_dollar_rect.collidepoint(event.pos)
+                            and self.blinds.active_blind == "twenty_dollar"
+                        ):
+                            self.player_list[self.client.id].add_move("big_blind", [20])
+
+                # If your the dealer and havn't dealt
+                elif data.dealer == self.client.id and not data.has_dealt:
+                    # If the blinds have been initilized and the dealer hasn't dealt
+                    if data.small_blind_bet != 0 and data.big_blind_bet != 0:
                         # Clicks the deal button
                         if event.type == pg.MOUSEBUTTONUP:
-                            self.player_list[self.client.id].move.append("deal")
+                            self.player_list[self.client.id].add_move("deal")
 
                         # Hovers over deal button
                         if event.type == pg.MOUSEMOTION:
@@ -303,12 +388,14 @@ class Game:
                                 self.options.deal_rect.collidepoint(event.pos)
                             )
 
-                    # If the dealer has dealt and the dealing animation isn't occuring
-                    elif self.has_dealt and not self.is_dealing:
+                # If the dealer has dealt and the dealing animation isn't occuring
+                if data.has_dealt and not data.is_dealing:
+                    # If it's your turn
+                    if self.client.id == data.turn:
                         if event.type == pg.MOUSEBUTTONUP:
                             # If the user clicks the fold option
                             if self.options.fold_rect.collidepoint(event.pos):
-                                self.player_list[self.client.id].move.append("fold")
+                                self.player_list[self.client.id].add_move("fold")
 
                         elif event.type == pg.MOUSEMOTION:
                             self.options.fold_active = (
@@ -321,8 +408,7 @@ class Game:
                                 self.options.raise_rect.collidepoint(event.pos)
                             )
 
-                # If it's not your turn and the dealer has dealt and the dealing animation isn't occuring
-                if self.has_dealt and not self.is_dealing:
+                    # As long as the cards have been dealt
                     if event.type == pg.MOUSEBUTTONUP:
                         # If the user clicks the view cards button
                         if self.options.view_cards_rect.collidepoint(event.pos):
@@ -336,35 +422,21 @@ class Game:
         clock = pg.time.Clock()
         while True:
             clock.tick(60)
-            self.handle_input()
 
             if self.home_page.in_home:
+                self.handle_input()
                 self.screen.fill((0, 120, 0))
                 self.draw.draw_home()
 
             elif self.join_lobby.in_lobby:
+                self.handle_input()
                 self.screen.fill((0, 120, 0))
                 self.draw.draw_join_lobby()
             elif self.create_lobby.in_lobby:
+                self.handle_input()
                 self.screen.fill((0, 120, 0))
                 self.draw.draw_create_lobby()
             else:
-                self.screen.fill((180, 160, 160))
-                if self.game_started:
-                    # If it's your turn
-                    if self.turn == self.client.id:
-                        # If the dealer hasn't dealt
-                        if not self.has_dealt:
-                            self.draw.draw_deal_option()
-                        # If the dealing animation is not occuring
-                        elif not self.is_dealing:
-                            self.draw.draw_options()
-                    # If the dealer has dealt and the animation isn't occuring
-                    if self.has_dealt and not self.is_dealing:
-                        self.draw.draw_view_cards()
-                else:
-                    self.draw.draw_ready_option(self.ready)
-
                 # Send your player data over
                 self.client.send_object(self.player_list[self.client.id])
 
@@ -374,17 +446,46 @@ class Game:
                 # Sync the players data
                 self.client.sync_players(self.player_list, data.player_list)
 
-                # Check if the game is started
-                self.check_if_game_started(data.game_started)
-                self.check_if_has_dealt(data.has_dealt)
-                self.check_if_is_dealing(data.is_dealing)
+                self.handle_input(data)
 
-                self.overhead_message = data.overhead_message
+                self.screen.fill((180, 160, 160))
 
-                # Update turn
-                self.turn = data.turn
+                # If the game hasn't started
+                if not data.game_started:
+                    if data.ante is None:
+                        if self.client.id == data.host:
+                            self.draw.draw_ante_option()
+                    else:
+                        self.draw.draw_ready_option(self.ready)
 
-                self.draw.draw_overhead_message(self.overhead_message)
+                # If the game has started
+                if data.game_started:
+                    # If you are the small blind and havn't bet
+                    if (
+                        data.small_blind_bet == 0
+                        and data.small_blind_player == self.client.id
+                    ):
+                        self.draw.draw_small_blind(data.ante)
+                    # If you are the big blind and havn't bet
+                    elif (
+                        data.small_blind_bet != 0
+                        and data.big_blind_bet == 0
+                        and data.big_blind_player == self.client.id
+                    ):
+                        self.draw.draw_big_blind(data.ante)
+
+                    # If you are the dealer
+                    elif data.dealer == self.client.id and not data.has_dealt:
+                        # If the blinds have been set
+                        if data.small_blind_bet != 0 and data.big_blind_bet != 0:
+                            self.draw.draw_deal_option()
+                    # If the dealer has dealt and the animation isn't occuring
+                    elif self.client.id == data.turn and not data.is_dealing:
+                        self.draw.draw_options()
+                    if data.has_dealt and not data.is_dealing:
+                        self.draw.draw_view_cards()
+
+                self.draw.draw_overhead_message(data.overhead_message)
                 self.draw.draw_table(data.deck)
                 self.draw.draw_all_player_cards(data.all_player_cards)
                 self.draw.draw_sprites(self.player_list, data.players_connected)
