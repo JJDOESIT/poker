@@ -11,6 +11,8 @@ from client.options import Options
 from client.draw import Draw
 from client.ante import Ante
 from client.blinds import Blinds
+from client.cards import Cards
+from client.viewCards import ViewCards
 from client.ready import Ready
 
 
@@ -33,6 +35,8 @@ class Game:
         self.create_lobby = Create(WIDTH)
         self.ante = Ante(WIDTH)
         self.blinds = Blinds(WIDTH)
+        self.cards = Cards()
+        self.viewCards = ViewCards(WIDTH)
         self.options = Options(WIDTH)
         self.draw = Draw(
             WIDTH,
@@ -43,6 +47,8 @@ class Game:
             self.create_lobby,
             self.ante,
             self.blinds,
+            self.cards,
+            self.viewCards,
             self.options,
         )
 
@@ -380,7 +386,8 @@ class Game:
                     if data.small_blind_bet != 0 and data.big_blind_bet != 0:
                         # Clicks the deal button
                         if event.type == pg.MOUSEBUTTONUP:
-                            self.player_list[self.client.id].add_move("deal")
+                            if self.options.deal_rect.collidepoint(event.pos):
+                                self.player_list[self.client.id].add_move("deal")
 
                         # Hovers over deal button
                         if event.type == pg.MOUSEMOTION:
@@ -392,27 +399,30 @@ class Game:
                 if data.has_dealt and not data.is_dealing:
                     # If it's your turn
                     if self.client.id == data.turn:
-                        if event.type == pg.MOUSEBUTTONUP:
-                            # If the user clicks the fold option
-                            if self.options.fold_rect.collidepoint(event.pos):
-                                self.player_list[self.client.id].add_move("fold")
+                        if not self.viewCards.viewing_cards:
+                            if event.type == pg.MOUSEBUTTONUP:
+                                # If the user clicks the fold option
+                                if self.options.fold_rect.collidepoint(event.pos):
+                                    self.player_list[self.client.id].add_move("fold")
 
-                        elif event.type == pg.MOUSEMOTION:
-                            self.options.fold_active = (
-                                self.options.fold_rect.collidepoint(event.pos)
-                            )
-                            self.options.call_active = (
-                                self.options.call_rect.collidepoint(event.pos)
-                            )
-                            self.options.raise_active = (
-                                self.options.raise_rect.collidepoint(event.pos)
-                            )
+                            elif event.type == pg.MOUSEMOTION:
+                                self.options.fold_active = (
+                                    self.options.fold_rect.collidepoint(event.pos)
+                                )
+                                self.options.call_active = (
+                                    self.options.call_rect.collidepoint(event.pos)
+                                )
+                                self.options.raise_active = (
+                                    self.options.raise_rect.collidepoint(event.pos)
+                                )
 
                     # As long as the cards have been dealt
                     if event.type == pg.MOUSEBUTTONUP:
                         # If the user clicks the view cards button
                         if self.options.view_cards_rect.collidepoint(event.pos):
-                            self.player_list[self.client.id].print_deck()
+                            self.viewCards.viewing_cards = (
+                                not self.viewCards.viewing_cards
+                            )
                     elif event.type == pg.MOUSEMOTION:
                         self.options.view_cards_active = (
                             self.options.view_cards_rect.collidepoint(event.pos)
@@ -481,14 +491,17 @@ class Game:
                             self.draw.draw_deal_option()
                     # If the dealer has dealt and the animation isn't occuring
                     elif self.client.id == data.turn and not data.is_dealing:
-                        self.draw.draw_options()
+                        if not self.viewCards.viewing_cards:
+                            self.draw.draw_options()
                     if data.has_dealt and not data.is_dealing:
                         self.draw.draw_view_cards()
 
+                self.draw.draw_sprites(self.player_list, data.players_connected)
                 self.draw.draw_overhead_message(data.overhead_message)
                 self.draw.draw_table(data.deck)
-                self.draw.draw_all_player_cards(data.all_player_cards)
-                self.draw.draw_sprites(self.player_list, data.players_connected)
+                self.draw.draw_pot_text(data.pot)
+                self.draw.draw_all_player_cards(data.all_player_cards, self.client.id)
+                self.draw.draw_player_cards(self.player_list[self.client.id].deck)
 
             pg.display.flip()
 

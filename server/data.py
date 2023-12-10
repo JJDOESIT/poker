@@ -22,6 +22,7 @@ class Data:
         self.small_blind_bet = 0
         self.big_blind_player = None
         self.small_blind_player = None
+        self.pot = 0
 
     # Switch to next players turn
     def increament_turn(self, number):
@@ -43,6 +44,13 @@ class Data:
     # Sync players
     def sync_players(self, player, id):
         self.player_list[id] = player
+
+    # Check if the host left or if the player left during their turn
+    def check_for_redo(self, id):
+        if self.host == id:
+            self.host = self.increament_turn(self.host)
+        if self.turn == id:
+            self.turn = self.increament_turn(self.turn)
 
     # Reset the server to a blank slate
     def check_for_reset(self):

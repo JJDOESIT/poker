@@ -12,6 +12,8 @@ class Draw:
         create_lobby,
         ante,
         blinds,
+        cards,
+        viewCards,
         options,
     ):
         self.width = width
@@ -22,8 +24,9 @@ class Draw:
         self.create_lobby = create_lobby
         self.ante = ante
         self.blinds = blinds
+        self.cards = cards
+        self.viewCards = viewCards
         self.options = options
-        self.card_back = pg.image.load("./images/cards/card_back.png")
         self.poker_table = pg.image.load("./images/poker_table.png")
         self.xs_font = pg.font.Font(None, 16)
         self.sm_font = pg.font.Font(None, 32)
@@ -31,12 +34,48 @@ class Draw:
         self.lg_font = pg.font.Font(None, 128)
         self.xl_font = pg.font.Font(None, 200)
 
+    # Draw the players personal cards
+    def draw_player_cards(self, deck):
+        if self.viewCards.viewing_cards:
+            if not self.viewCards.cards_initilized:
+                self.viewCards.initilize_cards(
+                    self.cards.fetch_card(deck[0].number, deck[0].suit),
+                    self.cards.fetch_card(deck[1].number, deck[1].suit),
+                )
+
+            self.screen.blit(
+                self.viewCards.left_card_image, self.viewCards.left_card_rect
+            )
+            self.screen.blit(
+                self.viewCards.right_card_image, self.viewCards.right_card_rect
+            )
+
+    # Draw the total pot text
+    def draw_pot_text(self, pot):
+        if pot != 0:
+            pot_text_surface = self.md_font.render(f"Pot: ${pot}", True, (0, 0, 0))
+            self.screen.blit(
+                pot_text_surface,
+                (
+                    self.options.view_cards_rect.centerx
+                    - (pot_text_surface.get_width() / 2),
+                    self.options.view_cards_rect.bottom + 20,
+                ),
+            )
+
     # Draw the ante options
     def draw_ante_option(self):
         self.screen.blit(self.ante.two_dollar_img, self.ante.two_dollar_rect)
         self.screen.blit(self.ante.five_dollar_img, self.ante.five_dollar_rect)
         self.screen.blit(self.ante.ten_dollar_img, self.ante.ten_dollar_rect)
         self.screen.blit(self.ante.twenty_dollar_img, self.ante.twenty_dollar_rect)
+
+        # Draw the "Set the ante" text
+        ante_text_surface = self.sm_font.render("Set the ante", True, (0, 0, 0))
+        self.screen.blit(
+            ante_text_surface,
+            ((self.width / 2) - (ante_text_surface.get_width() / 2), 850),
+        )
 
     # Draw the small blind options
     def draw_small_blind(self, ante):
@@ -52,6 +91,15 @@ class Draw:
         if ante // 2 == 10:
             self.blinds.active_blind = "ten_dollar"
             self.screen.blit(self.blinds.ten_dollar_img, self.blinds.ten_dollar_rect)
+
+        # Draw the "Place small blind" text
+        small_blind_text_surface = self.sm_font.render(
+            "Place small blind", True, (0, 0, 0)
+        )
+        self.screen.blit(
+            small_blind_text_surface,
+            ((self.width / 2) - (small_blind_text_surface.get_width() / 2), 850),
+        )
 
     # Draw the big blind options
     def draw_big_blind(self, ante):
@@ -70,11 +118,21 @@ class Draw:
                 self.blinds.twenty_dollar_img, self.blinds.twenty_dollar_rect
             )
 
+        # Draw the "Place big blind" text
+        big_blind_text_surface = self.sm_font.render("Place big blind", True, (0, 0, 0))
+        self.screen.blit(
+            big_blind_text_surface,
+            ((self.width / 2) - (big_blind_text_surface.get_width() / 2), 850),
+        )
+
     # Draw the players cards
-    def draw_all_player_cards(self, card_list):
-        for card_set in card_list.values():
+    def draw_all_player_cards(self, card_list, id):
+        for key, card_set in card_list.items():
             for card in card_set:
-                card_back = pg.transform.scale(self.card_back, (40, 60))
+                if key == id:
+                    break
+                card_back = self.cards.fetch_card(-1, -1)
+                card_back = pg.transform.scale(card_back, (40, 60))
                 card_back = pg.transform.rotate(card_back, card.angle)
                 self.screen.blit(card_back, (card.position.x, card.position.y))
 
@@ -90,7 +148,8 @@ class Draw:
         )
 
         # Draw the deck of cards
-        card_back = pg.transform.scale(self.card_back, (40, 60))
+        card_back = self.cards.fetch_card(-1, -1)
+        card_back = pg.transform.scale(card_back, (40, 60))
         for card in deck.deck:
             self.screen.blit(card_back, (card.position.x, card.position.y))
 

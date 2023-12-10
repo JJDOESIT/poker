@@ -64,4 +64,5 @@ class Deal:
                         self.data.turn = self.data.increament_turn(
                             self.data.big_blind_player
                         )
+                        self.data.turn = self.data.increament_turn(self.data.turn)
                         self.data.is_dealing = False

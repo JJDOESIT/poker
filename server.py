@@ -8,7 +8,7 @@ from server.data import Data
 from server.ready import Ready
 from server.actions import Actions
 from server.deal import Deal
-from server.bets import Bets
+from server.blinds import Blinds
 
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -21,11 +21,11 @@ data = Data()
 ready = Ready(data)
 actions = Actions(data)
 deal = Deal(data)
-bets = Bets(data)
+blinds = Blinds(data)
 
 
 def thread(client_socket):
-    global data, deal, actions
+    global data, deal, actions, blinds
     personal_id = None
 
     try:
@@ -46,18 +46,18 @@ def thread(client_socket):
             data.sync_players(recv_data, personal_id)
             ready.handle_ready_up(recv_data, personal_id)
             actions.handle_move(recv_data, personal_id)
-            bets.initilize_betting_players()
+            blinds.initilize_betting_players()
             deal.deal_cards(personal_id)
 
         # If no data is received, disconnect the player
         except:
             print(f"Client {personal_id} disconnected")
             data.players_connected[personal_id] = "open"
-            bets.check_for_redo(personal_id)
-            if data.host == personal_id:
-                data.host = data.increament_turn(data.host)
+            data.check_for_reset()
+            dealer = data.dealer
             deal.check_for_redo(personal_id)
-
+            blinds.check_for_redo(personal_id, dealer)
+            data.check_for_redo(personal_id)
             break
         # Send the other players data back
         try:

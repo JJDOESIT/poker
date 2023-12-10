@@ -14,11 +14,13 @@ class Actions:
 
         elif player.move[0] == "small_blind":
             self.data.small_blind_bet = player.move[1][0]
+            self.data.pot += self.data.small_blind_bet
             self.data.overhead_message = f"Small blind is ${self.data.small_blind_bet}"
             self.data.player_list[id].reset_move()
 
         elif player.move[0] == "big_blind":
             self.data.big_blind_bet = player.move[1][0]
+            self.data.pot += self.data.big_blind_bet
             self.data.overhead_message = f"Big blind is ${self.data.big_blind_bet}"
             self.data.player_list[id].reset_move()
 
