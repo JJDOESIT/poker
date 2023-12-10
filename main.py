@@ -13,6 +13,7 @@ from client.ante import Ante
 from client.blinds import Blinds
 from client.cards import Cards
 from client.viewCards import ViewCards
+from client.animations import Animations
 from client.ready import Ready
 
 
@@ -37,6 +38,7 @@ class Game:
         self.blinds = Blinds(WIDTH)
         self.cards = Cards()
         self.viewCards = ViewCards(WIDTH)
+        self.animations = Animations()
         self.options = Options(WIDTH)
         self.draw = Draw(
             WIDTH,
@@ -49,6 +51,7 @@ class Game:
             self.blinds,
             self.cards,
             self.viewCards,
+            self.animations,
             self.options,
         )
 
@@ -420,9 +423,9 @@ class Game:
                     if event.type == pg.MOUSEBUTTONUP:
                         # If the user clicks the view cards button
                         if self.options.view_cards_rect.collidepoint(event.pos):
-                            self.viewCards.viewing_cards = (
-                                not self.viewCards.viewing_cards
-                            )
+                            if not self.viewCards.viewing_cards:
+                                self.viewCards.viewing_cards = True
+                                self.viewCards.moving_to_hand = True
                     elif event.type == pg.MOUSEMOTION:
                         self.options.view_cards_active = (
                             self.options.view_cards_rect.collidepoint(event.pos)
@@ -501,7 +504,11 @@ class Game:
                 self.draw.draw_table(data.deck)
                 self.draw.draw_pot_text(data.pot)
                 self.draw.draw_all_player_cards(data.all_player_cards, self.client.id)
-                self.draw.draw_player_cards(self.player_list[self.client.id].deck)
+                self.draw.draw_player_cards(
+                    self.player_list[self.client.id].deck,
+                    data.all_player_cards,
+                    self.client.id,
+                )
 
             pg.display.flip()
 

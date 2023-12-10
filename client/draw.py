@@ -14,6 +14,7 @@ class Draw:
         blinds,
         cards,
         viewCards,
+        animations,
         options,
     ):
         self.width = width
@@ -26,6 +27,7 @@ class Draw:
         self.blinds = blinds
         self.cards = cards
         self.viewCards = viewCards
+        self.animations = animations
         self.options = options
         self.poker_table = pg.image.load("./images/poker_table.png")
         self.xs_font = pg.font.Font(None, 16)
@@ -35,20 +37,104 @@ class Draw:
         self.xl_font = pg.font.Font(None, 200)
 
     # Draw the players personal cards
-    def draw_player_cards(self, deck):
+    def draw_player_cards(self, deck, all_player_cards, id):
         if self.viewCards.viewing_cards:
             if not self.viewCards.cards_initilized:
                 self.viewCards.initilize_cards(
                     self.cards.fetch_card(deck[0].number, deck[0].suit),
                     self.cards.fetch_card(deck[1].number, deck[1].suit),
+                    all_player_cards[id],
                 )
 
-            self.screen.blit(
-                self.viewCards.left_card_image, self.viewCards.left_card_rect
+            if self.viewCards.moving_to_hand or self.viewCards.flipping_to_front:
+                left_table_card = self.cards.fetch_card(-1, -1)
+                right_table_card = self.cards.fetch_card(-1, -1)
+            else:
+                left_table_card = self.viewCards.left_revealed_card
+                right_table_card = self.viewCards.right_revealed_card
+
+            left_table_card = pg.transform.scale(
+                left_table_card, (self.viewCards.card_width, self.viewCards.card_height)
+            )
+            left_table_card = pg.transform.rotate(
+                left_table_card, self.viewCards.left_angle
             )
             self.screen.blit(
-                self.viewCards.right_card_image, self.viewCards.right_card_rect
+                left_table_card,
+                (
+                    self.viewCards.left_card_position.x,
+                    self.viewCards.left_card_position.y,
+                ),
             )
+
+            right_table_card = pg.transform.scale(
+                right_table_card,
+                (self.viewCards.card_width, self.viewCards.card_height),
+            )
+            right_table_card = pg.transform.rotate(
+                right_table_card, self.viewCards.right_angle
+            )
+            self.screen.blit(
+                right_table_card,
+                (
+                    self.viewCards.right_card_position.x,
+                    self.viewCards.right_card_position.y,
+                ),
+            )
+
+            # Lerp
+            if self.viewCards.moving_to_hand:
+                self.viewCards.left_card_position = self.animations.lerp_position(
+                    self.viewCards.left_card_position,
+                    self.viewCards.left_end_position,
+                    self.viewCards.position_tick,
+                )
+                self.viewCards.right_card_position = self.animations.lerp_position(
+                    self.viewCards.right_card_position,
+                    self.viewCards.right_end_position,
+                    self.viewCards.position_tick,
+                )
+                self.viewCards.card_width = self.animations.lerp_number(
+                    self.viewCards.card_width,
+                    self.viewCards.end_card_width,
+                    self.viewCards.position_tick,
+                )
+                self.viewCards.card_height = self.animations.lerp_number(
+                    self.viewCards.card_height,
+                    self.viewCards.end_card_height,
+                    self.viewCards.position_tick,
+                )
+
+                self.viewCards.left_angle = self.animations.lerp_number(
+                    self.viewCards.left_angle,
+                    self.viewCards.left_end_angle,
+                    self.viewCards.position_tick,
+                )
+                self.viewCards.right_angle = self.animations.lerp_number(
+                    self.viewCards.right_angle,
+                    self.viewCards.right_end_angle,
+                    self.viewCards.position_tick,
+                )
+                self.viewCards.position_tick += 0.005
+                self.viewCards.check_if_in_position()
+
+            elif self.viewCards.flipping_to_front:
+                self.viewCards.card_width = self.animations.lerp_number(
+                    self.viewCards.card_width,
+                    self.viewCards.end_card_width / 10,
+                    self.viewCards.flipping_tick,
+                )
+                self.viewCards.flipping_tick += 0.1
+                self.viewCards.check_if_switch()
+
+            elif self.viewCards.stretching_out_front:
+                self.viewCards.card_width = self.animations.lerp_number(
+                    self.viewCards.card_width,
+                    self.viewCards.end_card_width,
+                    self.viewCards.flipping_tick,
+                )
+                self.viewCards.flipping_tick += 0.1
+                self.viewCards.check_if_switch()
 
     # Draw the total pot text
     def draw_pot_text(self, pot):
@@ -129,8 +215,9 @@ class Draw:
     def draw_all_player_cards(self, card_list, id):
         for key, card_set in card_list.items():
             for card in card_set:
-                if key == id:
-                    break
+                if self.viewCards.viewing_cards:
+                    if key == id:
+                        break
                 card_back = self.cards.fetch_card(-1, -1)
                 card_back = pg.transform.scale(card_back, (40, 60))
                 card_back = pg.transform.rotate(card_back, card.angle)

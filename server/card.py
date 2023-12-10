@@ -42,16 +42,6 @@ class Card:
             self.position.x - self.end_position.x
         )
 
-    # Spherical linear interpolation
-    def slerp(self):
-        self.angle = self.angle * (1 - self.tick) + self.end_angle * self.tick
-
-    # Linear interpolation
-    def lerp(self):
-        self.position = self.position * (1 - self.tick) + self.end_position * self.tick
-        self.tick += 0.01
-        self.check_if_in_position()
-
     # Check if the card is in its final position
     def check_if_in_position(self):
         difference = self.position - self.end_position

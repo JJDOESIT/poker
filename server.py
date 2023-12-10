@@ -9,6 +9,7 @@ from server.ready import Ready
 from server.actions import Actions
 from server.deal import Deal
 from server.blinds import Blinds
+from client.animations import Animations
 
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -20,7 +21,8 @@ s.listen(4)
 data = Data()
 ready = Ready(data)
 actions = Actions(data)
-deal = Deal(data)
+animations = Animations()
+deal = Deal(data, animations)
 blinds = Blinds(data)
 
 
