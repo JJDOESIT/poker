@@ -55,17 +55,24 @@ class Draw:
                 right_table_card = self.viewCards.right_revealed_card
 
             left_table_card = pg.transform.scale(
-                left_table_card, (self.viewCards.card_width, self.viewCards.card_height)
+                left_table_card, (self.viewCards.card_width,
+                                  self.viewCards.card_height)
             )
             left_table_card = pg.transform.rotate(
                 left_table_card, self.viewCards.left_angle
             )
             if self.viewCards.flipping_to_front or self.viewCards.stretching_out_front:
-                my_rect = copy.deepcopy(self.viewCards.left_revealed_card_rect)
-                my_rect.x += (
+                left_table_card_rect = left_table_card.get_rect()
+                x_offset = (
                     self.viewCards.end_card_width - self.viewCards.card_width
                 ) / 2
-                self.screen.blit(left_table_card, my_rect)
+                y_offset = (self.viewCards.end_card_height -
+                            self.viewCards.card_height) / 2
+                left_table_card_rect.topleft = (
+                    self.viewCards.left_end_position.x +
+                    x_offset, self.viewCards.left_revealed_card_rect.top + y_offset
+                )
+                self.screen.blit(left_table_card, left_table_card_rect)
             else:
                 self.screen.blit(
                     left_table_card,
@@ -82,15 +89,18 @@ class Draw:
             right_table_card = pg.transform.rotate(
                 right_table_card, self.viewCards.right_angle
             )
-            right_table_card_rect = right_table_card.get_rect(
-                center=self.viewCards.right_revealed_card_rect.center
-            )
             if self.viewCards.flipping_to_front or self.viewCards.stretching_out_front:
-                my_rect = copy.deepcopy(self.viewCards.right_revealed_card_rect)
-                my_rect.x += (
+                right_table_card_rect = right_table_card.get_rect()
+                x_offset = (
                     self.viewCards.end_card_width - self.viewCards.card_width
                 ) / 2
-                self.screen.blit(right_table_card, my_rect)
+                y_offset = (self.viewCards.end_card_height -
+                            self.viewCards.card_height) / 2
+                right_table_card_rect.topleft = (
+                    self.viewCards.right_end_position.x +
+                    x_offset, self.viewCards.right_revealed_card_rect.top + y_offset
+                )
+                self.screen.blit(right_table_card, right_table_card_rect)
 
             else:
                 self.screen.blit(
@@ -134,7 +144,7 @@ class Draw:
                     self.viewCards.right_end_angle,
                     self.viewCards.position_tick,
                 )
-                self.viewCards.position_tick += 0.005
+                self.viewCards.position_tick += 0.01
                 self.viewCards.check_if_in_position()
 
             elif self.viewCards.flipping_to_front:
@@ -143,7 +153,7 @@ class Draw:
                     self.viewCards.end_card_width / 10,
                     self.viewCards.flipping_tick,
                 )
-                self.viewCards.flipping_tick += 0.1
+                self.viewCards.flipping_tick += 0.05
                 self.viewCards.check_if_switch()
 
             elif self.viewCards.stretching_out_front:
@@ -152,13 +162,14 @@ class Draw:
                     self.viewCards.end_card_width,
                     self.viewCards.flipping_tick,
                 )
-                self.viewCards.flipping_tick += 0.1
+                self.viewCards.flipping_tick += 0.05
                 self.viewCards.check_if_switch()
 
     # Draw the total pot text
     def draw_pot_text(self, pot):
         if pot != 0:
-            pot_text_surface = self.md_font.render(f"Pot: ${pot}", True, (0, 0, 0))
+            pot_text_surface = self.md_font.render(
+                f"Pot: ${pot}", True, (0, 0, 0))
             self.screen.blit(
                 pot_text_surface,
                 (
@@ -173,10 +184,12 @@ class Draw:
         self.screen.blit(self.ante.two_dollar_img, self.ante.two_dollar_rect)
         self.screen.blit(self.ante.five_dollar_img, self.ante.five_dollar_rect)
         self.screen.blit(self.ante.ten_dollar_img, self.ante.ten_dollar_rect)
-        self.screen.blit(self.ante.twenty_dollar_img, self.ante.twenty_dollar_rect)
+        self.screen.blit(self.ante.twenty_dollar_img,
+                         self.ante.twenty_dollar_rect)
 
         # Draw the "Set the ante" text
-        ante_text_surface = self.sm_font.render("Set the ante", True, (0, 0, 0))
+        ante_text_surface = self.sm_font.render(
+            "Set the ante", True, (0, 0, 0))
         self.screen.blit(
             ante_text_surface,
             ((self.width / 2) - (ante_text_surface.get_width() / 2), 850),
@@ -186,16 +199,20 @@ class Draw:
     def draw_small_blind(self, ante):
         if ante // 2 == 1:
             self.blinds.active_blind = "one_dollar"
-            self.screen.blit(self.blinds.one_dollar_img, self.blinds.one_dollar_rect)
+            self.screen.blit(self.blinds.one_dollar_img,
+                             self.blinds.one_dollar_rect)
         if ante // 2 == 2:
             self.blinds.active_blind = "two_dollar"
-            self.screen.blit(self.blinds.two_dollar_img, self.blinds.two_dollar_rect)
+            self.screen.blit(self.blinds.two_dollar_img,
+                             self.blinds.two_dollar_rect)
         if ante // 2 == 5:
             self.blinds.active_blind = "five_dollar"
-            self.screen.blit(self.blinds.five_dollar_img, self.blinds.five_dollar_rect)
+            self.screen.blit(self.blinds.five_dollar_img,
+                             self.blinds.five_dollar_rect)
         if ante // 2 == 10:
             self.blinds.active_blind = "ten_dollar"
-            self.screen.blit(self.blinds.ten_dollar_img, self.blinds.ten_dollar_rect)
+            self.screen.blit(self.blinds.ten_dollar_img,
+                             self.blinds.ten_dollar_rect)
 
         # Draw the "Place small blind" text
         small_blind_text_surface = self.sm_font.render(
@@ -210,13 +227,16 @@ class Draw:
     def draw_big_blind(self, ante):
         if ante == 2:
             self.blinds.active_blind = "two_dollar"
-            self.screen.blit(self.blinds.two_dollar_img, self.blinds.two_dollar_rect)
+            self.screen.blit(self.blinds.two_dollar_img,
+                             self.blinds.two_dollar_rect)
         if ante == 5:
             self.blinds.active_blind = "five_dollar"
-            self.screen.blit(self.blinds.five_dollar_img, self.blinds.five_dollar_rect)
+            self.screen.blit(self.blinds.five_dollar_img,
+                             self.blinds.five_dollar_rect)
         if ante == 10:
             self.blinds.active_blind = "ten_dollar"
-            self.screen.blit(self.blinds.ten_dollar_img, self.blinds.ten_dollar_rect)
+            self.screen.blit(self.blinds.ten_dollar_img,
+                             self.blinds.ten_dollar_rect)
         if ante == 20:
             self.blinds.active_blind = "twenty_dollar"
             self.screen.blit(
@@ -224,7 +244,8 @@ class Draw:
             )
 
         # Draw the "Place big blind" text
-        big_blind_text_surface = self.sm_font.render("Place big blind", True, (0, 0, 0))
+        big_blind_text_surface = self.sm_font.render(
+            "Place big blind", True, (0, 0, 0))
         self.screen.blit(
             big_blind_text_surface,
             ((self.width / 2) - (big_blind_text_surface.get_width() / 2), 850),
@@ -261,7 +282,8 @@ class Draw:
 
     # Draw the overhead message
     def draw_overhead_message(self, message):
-        overhead_message_text_surface = self.md_font.render(message, True, (0, 0, 0))
+        overhead_message_text_surface = self.md_font.render(
+            message, True, (0, 0, 0))
         self.screen.blit(
             overhead_message_text_surface,
             (self.width / 2 - overhead_message_text_surface.get_width() / 2, 25),
@@ -285,7 +307,8 @@ class Draw:
             )
 
         # Draw the "View Cards" text
-        view_cards_text_surface = self.sm_font.render("View Cards", True, (0, 0, 0))
+        view_cards_text_surface = self.sm_font.render(
+            "View Cards", True, (0, 0, 0))
         self.screen.blit(
             view_cards_text_surface,
             (
@@ -341,8 +364,10 @@ class Draw:
         self.screen.blit(
             deal_text_surface,
             (
-                self.options.deal_rect.centerx - (deal_text_surface.get_width() / 2),
-                self.options.deal_rect.centery - (deal_text_surface.get_height() / 2),
+                self.options.deal_rect.centerx -
+                (deal_text_surface.get_width() / 2),
+                self.options.deal_rect.centery -
+                (deal_text_surface.get_height() / 2),
             ),
         )
 
@@ -401,8 +426,10 @@ class Draw:
         self.screen.blit(
             fold_text_surface,
             (
-                self.options.fold_rect.centerx - (fold_text_surface.get_width() / 2),
-                self.options.fold_rect.centery - (fold_text_surface.get_height() / 2),
+                self.options.fold_rect.centerx -
+                (fold_text_surface.get_width() / 2),
+                self.options.fold_rect.centery -
+                (fold_text_surface.get_height() / 2),
             ),
         )
 
@@ -411,8 +438,10 @@ class Draw:
         self.screen.blit(
             call_text_surface,
             (
-                self.options.call_rect.centerx - (call_text_surface.get_width() / 2),
-                self.options.call_rect.centery - (call_text_surface.get_height() / 2),
+                self.options.call_rect.centerx -
+                (call_text_surface.get_width() / 2),
+                self.options.call_rect.centery -
+                (call_text_surface.get_height() / 2),
             ),
         )
 
@@ -421,8 +450,10 @@ class Draw:
         self.screen.blit(
             raise_text_surface,
             (
-                self.options.raise_rect.centerx - (raise_text_surface.get_width() / 2),
-                self.options.raise_rect.centery - (raise_text_surface.get_height() / 2),
+                self.options.raise_rect.centerx -
+                (raise_text_surface.get_width() / 2),
+                self.options.raise_rect.centery -
+                (raise_text_surface.get_height() / 2),
             ),
         )
 
@@ -479,7 +510,8 @@ class Draw:
     # Draw the home page
     def draw_home(self):
         # Draw home title
-        title_text_surface = self.xl_font.render("Local Poker", True, (255, 255, 255))
+        title_text_surface = self.xl_font.render(
+            "Local Poker", True, (255, 255, 255))
         self.screen.blit(
             title_text_surface,
             ((self.width / 2) - (title_text_surface.get_width() / 2), 150),
@@ -510,13 +542,16 @@ class Draw:
         self.screen.blit(
             join_text_surface,
             (
-                self.home_page.join_rect.centerx - (join_text_surface.get_width() / 2),
-                self.home_page.join_rect.centery - (join_text_surface.get_height() / 2),
+                self.home_page.join_rect.centerx -
+                (join_text_surface.get_width() / 2),
+                self.home_page.join_rect.centery -
+                (join_text_surface.get_height() / 2),
             ),
         )
 
         # Draw create text
-        create_text_surface = self.md_font.render("Create Lobby", True, (0, 0, 0))
+        create_text_surface = self.md_font.render(
+            "Create Lobby", True, (0, 0, 0))
         self.screen.blit(
             create_text_surface,
             (
@@ -642,7 +677,8 @@ class Draw:
         )
 
         # Draw the "Name:" text
-        name_text_surface = self.md_font.render("Username:", True, (255, 255, 255))
+        name_text_surface = self.md_font.render(
+            "Username:", True, (255, 255, 255))
         self.screen.blit(
             name_text_surface,
             (
@@ -695,7 +731,8 @@ class Draw:
         self.screen.blit(
             exit_text_surface,
             (
-                self.join_lobby.exit_rect.centerx - (exit_text_surface.get_width() / 2),
+                self.join_lobby.exit_rect.centerx -
+                (exit_text_surface.get_width() / 2),
                 self.join_lobby.exit_rect.centery
                 - (exit_text_surface.get_height() / 2),
             ),
@@ -827,7 +864,8 @@ class Draw:
         )
 
         # Draw the "Port:" text
-        static_port_text_surface = self.md_font.render("Port:", True, (255, 255, 255))
+        static_port_text_surface = self.md_font.render(
+            "Port:", True, (255, 255, 255))
         self.screen.blit(
             static_port_text_surface,
             (

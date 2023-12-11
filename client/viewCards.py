@@ -31,17 +31,19 @@ class ViewCards:
         self.left_revealed_card = left_card_image
         self.right_revealed_card = right_card_image
         self.left_revealed_card = pg.transform.scale(
-            self.left_revealed_card, (self.end_card_width, self.end_card_height)
+            self.left_revealed_card, (self.end_card_width,
+                                      self.end_card_height)
         )
         self.right_revealed_card = pg.transform.scale(
-            self.right_revealed_card, (self.end_card_width, self.end_card_height)
+            self.right_revealed_card, (self.end_card_width,
+                                       self.end_card_height)
         )
 
         self.left_revealed_card_rect = self.left_revealed_card.get_rect(
-            center=(self.left_card_position.x, self.left_end_position.y + 140)
+            topleft=(self.left_end_position.x, self.left_end_position.y)
         )
         self.right_revealed_card_rect = self.right_revealed_card.get_rect(
-            center=(self.right_card_position.x, self.right_end_position.y + 140)
+            topleft=(self.right_end_position.x, self.right_end_position.y)
         )
 
         self.cards_initilized = True
@@ -62,11 +64,11 @@ class ViewCards:
 
     def check_if_switch(self):
         if self.flipping_to_front:
-            if abs(self.card_width - self.end_card_width / 10) <= 0.05:
+            if abs(self.card_width - self.end_card_width / 10) <= 5:
                 self.flipping_to_front = False
                 self.stretching_out_front = True
                 self.flipping_tick = 0
         elif self.stretching_out_front:
-            if abs(self.card_width - self.end_card_width) <= 0.05:
+            if abs(self.card_width - self.end_card_width) <= 0.5:
                 self.stretching_out_front = False
                 self.flipping_tick = 0
