@@ -37,6 +37,13 @@ class ViewCards:
             self.right_revealed_card, (self.end_card_width, self.end_card_height)
         )
 
+        self.left_revealed_card_rect = self.left_revealed_card.get_rect(
+            center=(self.left_card_position.x, self.left_end_position.y + 140)
+        )
+        self.right_revealed_card_rect = self.right_revealed_card.get_rect(
+            center=(self.right_card_position.x, self.right_end_position.y + 140)
+        )
+
         self.cards_initilized = True
 
     # Check if the cards are in position

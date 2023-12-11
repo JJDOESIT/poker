@@ -1,4 +1,5 @@
 import pygame as pg
+import copy
 
 
 class Draw:
@@ -59,13 +60,20 @@ class Draw:
             left_table_card = pg.transform.rotate(
                 left_table_card, self.viewCards.left_angle
             )
-            self.screen.blit(
-                left_table_card,
-                (
-                    self.viewCards.left_card_position.x,
-                    self.viewCards.left_card_position.y,
-                ),
-            )
+            if self.viewCards.flipping_to_front or self.viewCards.stretching_out_front:
+                my_rect = copy.deepcopy(self.viewCards.left_revealed_card_rect)
+                my_rect.x += (
+                    self.viewCards.end_card_width - self.viewCards.card_width
+                ) / 2
+                self.screen.blit(left_table_card, my_rect)
+            else:
+                self.screen.blit(
+                    left_table_card,
+                    (
+                        self.viewCards.left_card_position.x,
+                        self.viewCards.left_card_position.y,
+                    ),
+                )
 
             right_table_card = pg.transform.scale(
                 right_table_card,
@@ -74,13 +82,24 @@ class Draw:
             right_table_card = pg.transform.rotate(
                 right_table_card, self.viewCards.right_angle
             )
-            self.screen.blit(
-                right_table_card,
-                (
-                    self.viewCards.right_card_position.x,
-                    self.viewCards.right_card_position.y,
-                ),
+            right_table_card_rect = right_table_card.get_rect(
+                center=self.viewCards.right_revealed_card_rect.center
             )
+            if self.viewCards.flipping_to_front or self.viewCards.stretching_out_front:
+                my_rect = copy.deepcopy(self.viewCards.right_revealed_card_rect)
+                my_rect.x += (
+                    self.viewCards.end_card_width - self.viewCards.card_width
+                ) / 2
+                self.screen.blit(right_table_card, my_rect)
+
+            else:
+                self.screen.blit(
+                    right_table_card,
+                    (
+                        self.viewCards.right_card_position.x,
+                        self.viewCards.right_card_position.y,
+                    ),
+                )
 
             # Lerp
             if self.viewCards.moving_to_hand:
