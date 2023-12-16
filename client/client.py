@@ -22,7 +22,7 @@ class Client:
 
     # Receive objects from the server
     def receive_object(self):
-        recv_data = self.client_socket.recv(20000)
+        recv_data = self.client_socket.recv(50000)
         recv_data = pickle.loads(recv_data)
         return recv_data
 

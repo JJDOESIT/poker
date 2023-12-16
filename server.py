@@ -43,7 +43,7 @@ def thread(client_socket):
     while True:
         # Receive singular player data
         try:
-            recv_data = client_socket.recv(8192)
+            recv_data = client_socket.recv(50000)
             recv_data = pickle.loads(recv_data)
             data.sync_players(recv_data, personal_id)
             ready.handle_ready_up(recv_data, personal_id)
