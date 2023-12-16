@@ -11,8 +11,10 @@ from client.options import Options
 from client.draw import Draw
 from client.ante import Ante
 from client.blinds import Blinds
+from client.chips import Chips
 from client.cards import Cards
 from client.viewCards import ViewCards
+from client.increase import Raise
 from client.animations import Animations
 from client.ready import Ready
 
@@ -36,8 +38,10 @@ class Game:
         self.create_lobby = Create(WIDTH)
         self.ante = Ante(WIDTH)
         self.blinds = Blinds(WIDTH)
+        self.chips = Chips()
         self.cards = Cards()
         self.viewCards = ViewCards(WIDTH)
+        self.raise_option = Raise(WIDTH)
         self.animations = Animations()
         self.options = Options(WIDTH)
         self.draw = Draw(
@@ -49,8 +53,10 @@ class Game:
             self.create_lobby,
             self.ante,
             self.blinds,
+            self.chips,
             self.cards,
             self.viewCards,
+            self.raise_option,
             self.animations,
             self.options,
         )
@@ -215,7 +221,8 @@ class Game:
                     )
                     # If the user clicks the port input box
                     self.create_lobby.type_port_active = (
-                        self.create_lobby.input_port_rect.collidepoint(event.pos)
+                        self.create_lobby.input_port_rect.collidepoint(
+                            event.pos)
                     )
                     # If the user clicks auto connect
                     if self.create_lobby.auto_connect_rect.collidepoint(event.pos):
@@ -295,13 +302,17 @@ class Game:
                         if event.type == pg.MOUSEBUTTONUP:
                             # If the user selects an ante
                             if self.ante.two_dollar_rect.collidepoint(event.pos):
-                                self.player_list[self.client.id].add_move("ante", [2])
+                                self.player_list[self.client.id].add_move(
+                                    "ante", [2])
                             if self.ante.five_dollar_rect.collidepoint(event.pos):
-                                self.player_list[self.client.id].add_move("ante", [5])
+                                self.player_list[self.client.id].add_move(
+                                    "ante", [5])
                             if self.ante.ten_dollar_rect.collidepoint(event.pos):
-                                self.player_list[self.client.id].add_move("ante", [10])
+                                self.player_list[self.client.id].add_move(
+                                    "ante", [10])
                             if self.ante.twenty_dollar_rect.collidepoint(event.pos):
-                                self.player_list[self.client.id].add_move("ante", [20])
+                                self.player_list[self.client.id].add_move(
+                                    "ante", [20])
 
                 # If the ante has been set
                 else:
@@ -342,7 +353,8 @@ class Game:
                                 "small_blind", [2]
                             )
                         elif (
-                            self.blinds.five_dollar_rect.collidepoint(event.pos)
+                            self.blinds.five_dollar_rect.collidepoint(
+                                event.pos)
                             and self.blinds.active_blind == "five_dollar"
                         ):
                             self.player_list[self.client.id].add_move(
@@ -355,6 +367,26 @@ class Game:
                             self.player_list[self.client.id].add_move(
                                 "small_blind", [10]
                             )
+
+                    elif event.type == pg.MOUSEMOTION:
+                        # If the user hovers over the poker chips
+                        if self.blinds.one_dollar_rect.collidepoint(event.pos):
+                            self.blinds.one_dollar_rect.y = self.blinds.active_y
+                        else:
+                            self.blinds.one_dollar_rect.y = self.blinds.passive_y
+                        if self.blinds.two_dollar_rect.collidepoint(event.pos):
+                            self.blinds.two_dollar_rect.y = self.blinds.active_y
+                        else:
+                            self.blinds.two_dollar_rect.y = self.blinds.passive_y
+                        if self.blinds.five_dollar_rect.collidepoint(event.pos):
+                            self.blinds.five_dollar_rect.y = self.blinds.active_y
+                        else:
+                            self.blinds.five_dollar_rect.y = self.blinds.passive_y
+                        if self.blinds.ten_dollar_rect.collidepoint(event.pos):
+                            self.blinds.ten_dollar_rect.y = self.blinds.active_y
+                        else:
+                            self.blinds.ten_dollar_rect.y = self.blinds.passive_y
+
                 # Else if you're the big blind
                 elif (
                     data.small_blind_bet != 0
@@ -366,22 +398,47 @@ class Game:
                             self.blinds.two_dollar_rect.collidepoint(event.pos)
                             and self.blinds.active_blind == "two_dollar"
                         ):
-                            self.player_list[self.client.id].add_move("big_blind", [2])
+                            self.player_list[self.client.id].add_move(
+                                "big_blind", [2])
                         elif (
-                            self.blinds.five_dollar_rect.collidepoint(event.pos)
+                            self.blinds.five_dollar_rect.collidepoint(
+                                event.pos)
                             and self.blinds.active_blind == "five_dollar"
                         ):
-                            self.player_list[self.client.id].add_move("big_blind", [5])
+                            self.player_list[self.client.id].add_move(
+                                "big_blind", [5])
                         elif (
                             self.blinds.ten_dollar_rect.collidepoint(event.pos)
                             and self.blinds.active_blind == "ten_dollar"
                         ):
-                            self.player_list[self.client.id].add_move("big_blind", [10])
+                            self.player_list[self.client.id].add_move(
+                                "big_blind", [10])
                         elif (
-                            self.blinds.twenty_dollar_rect.collidepoint(event.pos)
+                            self.blinds.twenty_dollar_rect.collidepoint(
+                                event.pos)
                             and self.blinds.active_blind == "twenty_dollar"
                         ):
-                            self.player_list[self.client.id].add_move("big_blind", [20])
+                            self.player_list[self.client.id].add_move(
+                                "big_blind", [20])
+
+                    elif event.type == pg.MOUSEMOTION:
+                        # If the user hovers over the poker chips
+                        if self.blinds.twenty_dollar_rect.collidepoint(event.pos):
+                            self.blinds.twenty_dollar_rect.y = self.blinds.active_y
+                        else:
+                            self.blinds.twenty_dollar_rect.y = self.blinds.passive_y
+                        if self.blinds.two_dollar_rect.collidepoint(event.pos):
+                            self.blinds.two_dollar_rect.y = self.blinds.active_y
+                        else:
+                            self.blinds.two_dollar_rect.y = self.blinds.passive_y
+                        if self.blinds.five_dollar_rect.collidepoint(event.pos):
+                            self.blinds.five_dollar_rect.y = self.blinds.active_y
+                        else:
+                            self.blinds.five_dollar_rect.y = self.blinds.passive_y
+                        if self.blinds.ten_dollar_rect.collidepoint(event.pos):
+                            self.blinds.ten_dollar_rect.y = self.blinds.active_y
+                        else:
+                            self.blinds.ten_dollar_rect.y = self.blinds.passive_y
 
                 # If your the dealer and havn't dealt
                 elif data.dealer == self.client.id and not data.has_dealt:
@@ -390,7 +447,8 @@ class Game:
                         # Clicks the deal button
                         if event.type == pg.MOUSEBUTTONUP:
                             if self.options.deal_rect.collidepoint(event.pos):
-                                self.player_list[self.client.id].add_move("deal")
+                                self.player_list[self.client.id].add_move(
+                                    "deal")
 
                         # Hovers over deal button
                         if event.type == pg.MOUSEMOTION:
@@ -402,33 +460,143 @@ class Game:
                 if data.has_dealt and not data.is_dealing:
                     # If it's your turn
                     if self.client.id == data.turn:
+                        # If you are not viewing your cards
                         if not self.viewCards.viewing_cards:
-                            if event.type == pg.MOUSEBUTTONUP:
-                                # If the user clicks the fold option
-                                if self.options.fold_rect.collidepoint(event.pos):
-                                    self.player_list[self.client.id].add_move("fold")
+                            # If you are raising
+                            if self.raise_option.viewing_raise:
+                                if event.type == pg.MOUSEBUTTONUP:
+                                    # If the user clicks the back button
+                                    if self.raise_option.back_rect.collidepoint(event.pos):
+                                        self.raise_option.reset()
+                                    # If the user clicks a poker chip
+                                    elif self.raise_option.one_dollar_rect.collidepoint(event.pos):
+                                        if self.raise_option.clicked_chip_amount == 0:
+                                            self.raise_option.clicked_chip_amount = 1
+                                        else:
+                                            self.raise_option.clicked_chip_amount = 0
+                                    elif self.raise_option.two_dollar_rect.collidepoint(event.pos):
+                                        if self.raise_option.clicked_chip_amount == 0:
+                                            self.raise_option.clicked_chip_amount = 2
+                                        else:
+                                            self.raise_option.clicked_chip_amount = 0
+                                    elif self.raise_option.five_dollar_rect.collidepoint(event.pos):
+                                        if self.raise_option.clicked_chip_amount == 0:
+                                            self.raise_option.clicked_chip_amount = 5
+                                        else:
+                                            self.raise_option.clicked_chip_amount = 0
+                                    elif self.raise_option.ten_dollar_rect.collidepoint(event.pos):
+                                        if self.raise_option.clicked_chip_amount == 0:
+                                            self.raise_option.clicked_chip_amount = 10
+                                        else:
+                                            self.raise_option.clicked_chip_amount = 0
+                                    elif self.raise_option.twenty_dollar_rect.collidepoint(event.pos):
+                                        if self.raise_option.clicked_chip_amount == 0:
+                                            self.raise_option.clicked_chip_amount = 20
+                                        else:
+                                            self.raise_option.clicked_chip_amount = 0
+                                    self.raise_option.position_rects(WIDTH)
+                                    if self.raise_option.clicked_chip_amount == 1:
+                                        self.raise_option.one_dollar_rect.y = self.raise_option.active_y
+                                    elif self.raise_option.clicked_chip_amount == 2:
+                                        self.raise_option.two_dollar_rect.y = self.raise_option.active_y
+                                    elif self.raise_option.clicked_chip_amount == 5:
+                                        self.raise_option.five_dollar_rect.y = self.raise_option.active_y
+                                    elif self.raise_option.clicked_chip_amount == 10:
+                                        self.raise_option.ten_dollar_rect.y = self.raise_option.active_y
+                                    elif self.raise_option.clicked_chip_amount == 20:
+                                        self.raise_option.twenty_dollar_rect.y = self.raise_option.active_y
 
-                            elif event.type == pg.MOUSEMOTION:
-                                self.options.fold_active = (
-                                    self.options.fold_rect.collidepoint(event.pos)
-                                )
-                                self.options.call_active = (
-                                    self.options.call_rect.collidepoint(event.pos)
-                                )
-                                self.options.raise_active = (
-                                    self.options.raise_rect.collidepoint(event.pos)
-                                )
+                                    # If a chip is selected
+                                    if self.raise_option.clicked_chip_amount > 0:
+                                        # If the user has enough money to add a chip
+                                        if self.player_list[self.client.id].money - (self.raise_option.bet + self.raise_option.clicked_chip_amount) >= 0:
+                                            # If the user clicks the plus button
+                                            if self.raise_option.plus_rect.collidepoint(event.pos):
+                                                self.raise_option.bet += self.raise_option.clicked_chip_amount
+                                        # If the user has enough to subtract a chip
+                                        if self.raise_option.bet - self.raise_option.clicked_chip_amount >= 0:
+                                            # If the user clicks the minus button
+                                            if self.raise_option.minus_rect.collidepoint(event.pos):
+                                                self.raise_option.bet -= self.raise_option.clicked_chip_amount
+
+                                elif event.type == pg.MOUSEMOTION:
+                                    # If you hover over the back button
+                                    self.raise_option.back_active = self.raise_option.back_rect.collidepoint(
+                                        event.pos)
+                                    # If no chip is clicked
+                                    if self.raise_option.clicked_chip_amount == 0:
+                                        # If the user hovers over the poker chips
+                                        if self.raise_option.one_dollar_rect.collidepoint(event.pos):
+                                            self.raise_option.one_dollar_rect.y = self.raise_option.active_y
+                                        else:
+                                            self.raise_option.one_dollar_rect.y = self.raise_option.passive_y
+                                        if self.raise_option.two_dollar_rect.collidepoint(event.pos):
+                                            self.raise_option.two_dollar_rect.y = self.raise_option.active_y
+                                        else:
+                                            self.raise_option.two_dollar_rect.y = self.raise_option.passive_y
+                                        if self.raise_option.five_dollar_rect.collidepoint(event.pos):
+                                            self.raise_option.five_dollar_rect.y = self.raise_option.active_y
+                                        else:
+                                            self.raise_option.five_dollar_rect.y = self.raise_option.passive_y
+                                        if self.raise_option.ten_dollar_rect.collidepoint(event.pos):
+                                            self.raise_option.ten_dollar_rect.y = self.raise_option.active_y
+                                        else:
+                                            self.raise_option.ten_dollar_rect.y = self.raise_option.passive_y
+                                        if self.raise_option.twenty_dollar_rect.collidepoint(event.pos):
+                                            self.raise_option.twenty_dollar_rect.y = self.raise_option.active_y
+                                        else:
+                                            self.raise_option.twenty_dollar_rect.y = self.raise_option.passive_y
+
+                                    # If the chip is clicked and the user has enough money
+                                    elif self.player_list[self.client.id].money - (self.raise_option.bet + self.raise_option.clicked_chip_amount) >= 0:
+                                        self.raise_option.plus_active = self.raise_option.plus_rect.collidepoint(
+                                            event.pos)
+                                        self.raise_option.minus_active = self.raise_option.minus_rect.collidepoint(
+                                            event.pos)
+                            # If you are not raising
+                            else:
+                                if event.type == pg.MOUSEBUTTONUP:
+                                    # If the user clicks the fold option
+                                    if self.options.fold_rect.collidepoint(event.pos):
+                                        self.player_list[self.client.id].add_move(
+                                            "fold")
+                                    # If the user clicks the call option
+                                    elif self.options.call_rect.collidepoint(event.pos):
+                                        self.player_list[self.client.id].add_move(
+                                            "call")
+                                    # If the user clicks the raise option
+                                    elif self.options.raise_rect.collidepoint(event.pos):
+                                        self.raise_option.viewing_raise = True
+                                        self.options.reset()
+
+                                elif event.type == pg.MOUSEMOTION:
+                                    self.options.fold_active = (
+                                        self.options.fold_rect.collidepoint(
+                                            event.pos)
+                                    )
+                                    self.options.call_active = (
+                                        self.options.call_rect.collidepoint(
+                                            event.pos)
+                                    )
+                                    self.options.raise_active = (
+                                        self.options.raise_rect.collidepoint(
+                                            event.pos)
+                                    )
 
                     # As long as the cards have been dealt
                     if event.type == pg.MOUSEBUTTONUP:
                         # If the user clicks the view cards button
                         if self.options.view_cards_rect.collidepoint(event.pos):
-                            if not self.viewCards.viewing_cards:
-                                self.viewCards.viewing_cards = True
-                                self.viewCards.moving_to_hand = True
+                            if self.viewCards.current_process is None:
+                                if not self.viewCards.viewing_cards:
+                                    self.viewCards.proccess = [1, 2, 3]
+                                    self.viewCards.viewing_cards = True
+                                else:
+                                    self.viewCards.proccess = [4, 5, 6]
                     elif event.type == pg.MOUSEMOTION:
                         self.options.view_cards_active = (
-                            self.options.view_cards_rect.collidepoint(event.pos)
+                            self.options.view_cards_rect.collidepoint(
+                                event.pos)
                         )
 
     def run(self):
@@ -495,15 +663,23 @@ class Game:
                     # If the dealer has dealt and the animation isn't occuring
                     elif self.client.id == data.turn and not data.is_dealing:
                         if not self.viewCards.viewing_cards:
-                            self.draw.draw_options()
+                            if self.raise_option.viewing_raise:
+                                self.draw.draw_raise_options(
+                                    self.player_list[self.client.id])
+                            else:
+                                self.draw.draw_options()
+
                     if data.has_dealt and not data.is_dealing:
                         self.draw.draw_view_cards()
 
-                self.draw.draw_sprites(self.player_list, data.players_connected)
+                self.draw.draw_sprites(
+                    self.player_list, data.players_connected)
                 self.draw.draw_overhead_message(data.overhead_message)
                 self.draw.draw_table(data.deck)
                 self.draw.draw_pot_text(data.pot)
-                self.draw.draw_all_player_cards(data.all_player_cards, self.client.id)
+                self.draw.draw_chips(data.player_list)
+                self.draw.draw_all_player_cards(
+                    data.all_player_cards, self.client.id)
                 self.draw.draw_player_cards(
                     self.player_list[self.client.id].deck,
                     data.all_player_cards,

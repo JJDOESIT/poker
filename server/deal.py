@@ -34,7 +34,8 @@ class Deal:
                             self.data.all_player_cards[id][0].tick,
                         )
                         self.data.all_player_cards[id][0].tick += 0.01
-                        self.data.all_player_cards[id][0].check_if_in_position()
+                        self.data.all_player_cards[id][0].check_if_in_position(
+                        )
                         self.data.all_player_cards[id][
                             0
                         ].angle = self.animations.lerp_number(
@@ -66,7 +67,8 @@ class Deal:
                             self.data.all_player_cards[id][1].tick,
                         )
                         self.data.all_player_cards[id][1].tick += 0.01
-                        self.data.all_player_cards[id][1].check_if_in_position()
+                        self.data.all_player_cards[id][1].check_if_in_position(
+                        )
                         self.data.all_player_cards[id][
                             1
                         ].angle = self.animations.lerp_number(
@@ -93,5 +95,4 @@ class Deal:
                         self.data.turn = self.data.increament_turn(
                             self.data.big_blind_player
                         )
-                        self.data.turn = self.data.increament_turn(self.data.turn)
                         self.data.is_dealing = False

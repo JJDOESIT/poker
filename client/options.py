@@ -15,3 +15,11 @@ class Options:
         self.raise_active = False
         self.active_color = (225, 225, 225)
         self.passive_color = (200, 200, 200)
+
+    # Reset conditions
+    def reset(self):
+        self.view_cards_active = False
+        self.deal_active = False
+        self.fold_active = False
+        self.call_active = False
+        self.raise_active = False

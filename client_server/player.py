@@ -7,6 +7,7 @@ class Player:
         self.move = []
         self.previous_action = "Not ready"
         self.money = 150
+        self.bet = {1: 0, 2: 0, 5: 0, 10: 0, 20: 0}
         self.seat = self.initilize_seat(id)
         self.player_border_rect = self.initilize_sprite()
         self.deck = []
@@ -35,6 +36,17 @@ class Player:
         if data is not None:
             self.move.append(data)
 
+    # Return the total player bet
+    def get_total_bet(self):
+        total = 0
+        for key, value in self.bet.items():
+            total += (key * value)
+        return total
+
     # Reset move
     def reset_move(self):
         self.move = []
+
+    # Reset the deck
+    def reset_deck(self):
+        self.deck = []
