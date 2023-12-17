@@ -64,7 +64,7 @@ def thread(client_socket):
         # Send the other players data back
         try:
             sent_data = pickle.dumps(data)
-            client_socket.send(sent_data)
+            client_socket.sendall(sent_data)
         except:
             pass
 

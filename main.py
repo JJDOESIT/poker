@@ -94,18 +94,14 @@ class Game:
         if platform.system() == "Linux":
             result = subprocess.Popen(
                 ["python3", "server/testBind.py", self.create_lobby.port],
-                close_fds=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                stdin=subprocess.DEVNULL,
             )
         elif platform.system() == "Windows":
             result = subprocess.Popen(
                 ["py", "server/testBind.py", self.create_lobby.port],
-                close_fds=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                stdin=subprocess.DEVNULL,
             )
         result.wait()
         self.create_lobby.reset()
